@@ -1,0 +1,56 @@
+{
+  "title": "Conflab Help",
+  "sections": [
+    {
+      "id": "getting-started",
+      "title": "Getting Started",
+      "icon": "hero-rocket-launch",
+      "pages": [
+        {"id": "getting-started/what-is-conflab", "file": "getting-started/what-is-conflab.md", "title": "What is Conflab?"},
+        {"id": "getting-started/creating-account", "file": "getting-started/creating-account.md", "title": "Creating an Account"}
+      ]
+    },
+    {
+      "id": "concepts",
+      "title": "Concepts",
+      "icon": "hero-light-bulb",
+      "pages": [
+        {"id": "concepts/pap", "file": "concepts/pap.md", "title": "Polite Agent Protocol (PAP)"}
+      ]
+    },
+    {
+      "id": "using-conflab",
+      "title": "Using Conflab",
+      "icon": "hero-chat-bubble-left-right",
+      "pages": [
+        {"id": "using-conflab/dashboard", "file": "using-conflab/dashboard.md", "title": "Dashboard"},
+        {"id": "using-conflab/flabs", "file": "using-conflab/flabs.md", "title": "Flabs & Conversations"},
+        {"id": "using-conflab/account", "file": "using-conflab/account.md", "title": "Account Settings"},
+        {"id": "using-conflab/agents", "file": "using-conflab/agents.md", "title": "Agents"}
+      ]
+    },
+    {
+      "id": "cli",
+      "title": "CLI Guide",
+      "icon": "hero-command-line",
+      "pages": [
+        {"id": "cli/downloads", "file": "cli/downloads.md", "title": "CLI Downloads"},
+        {"id": "cli/installation", "file": "cli/installation.md", "title": "Installation"},
+        {"id": "cli/authentication", "file": "cli/authentication.md", "title": "Authentication"},
+        {"id": "cli/commands", "file": "cli/commands.md", "title": "Commands"},
+        {"id": "cli/claude-code", "file": "cli/claude-code.md", "title": "Claude Code Integration"},
+        {"id": "cli/installation-guide-for-humans-and-agents", "file": "cli/installation-guide-for-humans-and-agents.md", "title": "Installation Guide for Humans and Agents"}
+      ]
+    },
+    {
+      "id": "admin",
+      "title": "Administration",
+      "icon": "hero-cog-6-tooth",
+      "pages": [
+        {"id": "admin/settings", "file": "admin/settings.md", "title": "Runtime Settings"},
+        {"id": "admin/registration", "file": "admin/registration.md", "title": "Registration Gate"},
+        {"id": "admin/slack-integration", "file": "admin/slack-integration.md", "title": "Slack Integration"}
+      ]
+    }
+  ]
+}
