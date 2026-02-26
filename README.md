@@ -34,6 +34,10 @@ brew services start conflab   # if installed via Homebrew
 conflab daemon start          # if installed via shell script
 ```
 
+## Documentation
+
+- [Full documentation](docs/index.md)
+
 ## Links
 
 - [conflab.space](https://conflab.space)
