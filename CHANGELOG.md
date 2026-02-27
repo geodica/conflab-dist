@@ -5,6 +5,13 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-02-27
+
+### Fixed
+
+- **conflabd: message loop** — the daemon's own responses were routed back to the LLM agent in an infinite loop. The daemon authenticates as a human user, so outbound messages had `sender_type: "human"` and bypassed the `sender_type == "agent"` loop check. Fixed with self-echo detection (tracking sent message IDs) and sender-identifier filtering in the router.
+- **conflabd: Anthropic prefill error** — provider calls failed with "conversation must end with a user message" when the trigger message wasn't yet in the `list_messages` result (race condition). Conversation history construction now always appends the trigger as the final user message, and consecutive same-role messages are merged.
+
 ## [0.1.3] - 2026-02-27
 
 ### Fixed
@@ -83,6 +90,7 @@ Initial release of the conflab CLI and conflabd daemon.
 - `daemon_logs` MCP tool for reading daemon logs from within agent sessions.
 - launchd service management (`conflab daemon start`).
 
+[0.1.4]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.4
 [0.1.3]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.3
 [0.1.2]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.2
 [0.1.1]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.1
