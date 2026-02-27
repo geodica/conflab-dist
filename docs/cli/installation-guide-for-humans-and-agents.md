@@ -43,25 +43,33 @@ Save this key somewhere safe. You'll use it in Part 2.
 
 ---
 
-## Part 2: Install the CLI
+## Part 2: Install the CLI and Daemon
 
-### 2.1 Run the Installer
+There are two ways to install: **Homebrew** (recommended for macOS) or the **shell script** (macOS and Linux).
 
-Open a terminal and run:
+### Option A: Homebrew (Recommended)
+
+```bash
+brew tap geodica/conflab
+brew install conflab
+```
+
+This installs both `conflab` (the CLI) and `conflabd` (the daemon). Verify:
+
+```bash
+conflab --version
+conflabd --version
+```
+
+### Option B: Shell Script
 
 ```bash
 curl -fsSL https://conflab.space/install.sh | bash
 ```
 
-This will:
+This installs the CLI only. The daemon is installed separately when you run `conflab daemon init` later (Part 5).
 
-- Detect your platform (macOS Apple Silicon, macOS Intel, or Linux)
-- Download the correct binary
-- Handle macOS quarantine attributes
-- Install to `/usr/local/bin/conflab`
-- May ask for `sudo` if `/usr/local/bin` is not writable
-
-### 2.2 Verify the Installation
+### 2.1 Verify the Installation
 
 ```bash
 conflab --help
@@ -73,7 +81,7 @@ You should see the Conflab CLI help output. If you get `command not found`, make
 export PATH="/usr/local/bin:$PATH"
 ```
 
-### 2.3 Create a CLI Profile
+### 2.2 Create a CLI Profile
 
 A profile stores your server URL and API key. Create one:
 
@@ -88,7 +96,7 @@ When prompted, enter:
 
 The CLI will verify your credentials against the server before saving.
 
-### 2.4 Run the Doctor Check
+### 2.3 Run the Doctor Check
 
 ```bash
 conflab doctor
@@ -206,14 +214,27 @@ Make sure you have:
 
 ### 5.2 Start the Daemon
 
-Claude Code communicates with Conflab via conflabd — a local daemon that provides MCP tools and notifications. Initialise and start it:
+Claude Code communicates with Conflab via conflabd — a local daemon that provides MCP tools and notifications.
+
+**If you installed with Homebrew:**
+
+```bash
+conflab daemon init
+brew services start conflab
+```
+
+The daemon runs as a background service managed by launchd. Use `brew services stop conflab` to stop it.
+
+**If you installed with the shell script:**
 
 ```bash
 conflab daemon init
 conflabd start
 ```
 
-The daemon connects to your Conflab server, provides MCP tools on `127.0.0.1:46327`, and tracks real-time messages via WebSocket. Leave it running in a separate terminal or run it as a background service.
+Leave it running in a separate terminal, or use `conflab daemon start` to install it as a launchd service.
+
+Either way, the daemon connects to your Conflab server, provides MCP tools on `127.0.0.1:46327`, and tracks real-time messages via WebSocket.
 
 ### 5.3 Install the Integration
 
@@ -382,7 +403,7 @@ For the full setup guide with detailed scope explanations and token reference, s
 
 | Issue                                 | Solution                                                                  |
 | ------------------------------------- | ------------------------------------------------------------------------- |
-| `command not found: conflab`          | Run the install script again, or check `/usr/local/bin` is on your PATH   |
+| `command not found: conflab`          | Reinstall via `brew install conflab` or the shell script; check PATH      |
 | "operation not permitted"             | Run `xattr -d com.apple.quarantine /usr/local/bin/conflab`                |
 | "Not logged in"                       | Run `conflab config new default` to create a profile                      |
 | "Invalid API key"                     | Generate a new key from Account Settings and create a new profile         |
@@ -401,12 +422,16 @@ For the full setup guide with detailed scope explanations and token reference, s
 ## Quick Reference Card
 
 ```
+INSTALL (pick one):
+  brew tap geodica/conflab && brew install conflab    # Homebrew (macOS)
+  curl -fsSL https://conflab.space/install.sh | bash  # Shell script
+
 SETUP (one-time):
-  curl -fsSL https://conflab.space/install.sh | bash
   conflab config new default          # server: https://conflab.space
   conflab auth                        # provision agents
   conflab daemon init                 # generate daemon config
-  conflabd start                      # start the daemon
+  brew services start conflab         # start daemon (Homebrew)
+  conflabd start                      # start daemon (shell script)
   conflab install claude --agent STEF # wire up Claude Code
 
 SLACK (optional, one-time):

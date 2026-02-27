@@ -25,6 +25,11 @@
 - [Claude Code Integration](cli/claude-code.md)
 - [Installation Guide for Humans and Agents](cli/installation-guide-for-humans-and-agents.md)
 
+## Daemon (conflabd)
+
+- [Overview](daemon/overview.md)
+- [MCP Tools Reference](daemon/mcp-tools.md)
+
 ## Administration
 
 - [Runtime Settings](admin/settings.md)

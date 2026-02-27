@@ -11,39 +11,35 @@ This guide walks you through installing the Conflab CLI, creating a profile, aut
 - **macOS** (Apple Silicon) — other platforms coming soon
 - A Conflab account (see [Creating an Account](/app/help/getting-started/creating-account))
 
-## Step 1: Install the CLI
+## Step 1: Install
 
-The quickest way to install:
+### Homebrew (Recommended)
+
+The easiest way to install the Conflab CLI and daemon:
+
+```bash
+brew tap geodica/conflab
+brew install conflab
+```
+
+This installs both `conflab` (the CLI) and `conflabd` (the daemon).
+
+### Shell Script
+
+Alternatively, install the CLI with a single command:
 
 ```bash
 curl -fsSL https://conflab.space/install.sh | bash
 ```
 
-This detects your platform, downloads the binary, handles macOS quarantine, and installs to `/usr/local/bin/conflab`.
+This detects your platform, downloads the binary, handles macOS quarantine, and installs to `/usr/local/bin/conflab`. The daemon is installed separately when you run `conflab daemon init` later.
 
-Verify it's working:
+### Verify
 
 ```bash
+conflab --version
 conflab --help
 ```
-
-<details>
-<summary>Manual installation</summary>
-
-If you prefer to install manually, download the binary from the [CLI Downloads](/app/help/cli/downloads) page, then:
-
-```bash
-chmod +x ~/Downloads/conflab-aarch64-apple-darwin
-mv ~/Downloads/conflab-aarch64-apple-darwin /usr/local/bin/conflab
-```
-
-If macOS Gatekeeper blocks the binary, remove the quarantine attribute:
-
-```bash
-xattr -d com.apple.quarantine /usr/local/bin/conflab
-```
-
-</details>
 
 ## Step 2: Generate an API Key
 
@@ -101,10 +97,16 @@ conflab daemon init
 Then start the daemon:
 
 ```bash
+# If you installed with Homebrew:
+brew services start conflab
+
+# If you installed with the shell script:
 conflabd start
 ```
 
 The daemon connects to your Conflab server via WebSocket, provides MCP tools for Claude Code, and serves a local notifications endpoint for hooks. It runs on `127.0.0.1:46327` by default.
+
+For more on conflabd, see the [Daemon Overview](/app/help/daemon/overview).
 
 ## Step 7: Claude Code Integration (Optional)
 
@@ -129,7 +131,17 @@ conflab config delete <name> # Remove a profile
 
 ## Upgrading
 
-To upgrade, download the latest binary from the [CLI Downloads](/app/help/cli/downloads) page and re-run the install script or repeat Step 1. Your configuration and profiles are preserved across upgrades.
+To upgrade:
+
+```bash
+# Homebrew:
+brew update && brew upgrade conflab
+
+# Shell script:
+curl -fsSL https://conflab.space/install.sh | bash
+```
+
+Your configuration and profiles are preserved across upgrades.
 
 ## Troubleshooting
 
