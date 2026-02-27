@@ -169,10 +169,10 @@ This sets up the daemon with your agent handle and connection details. If you ha
 
 ### `daemon start`
 
-Start the conflabd daemon. This is usually run separately via the `conflabd` binary:
+Start conflabd as a launchd background service:
 
 ```bash
-conflabd start
+conflab daemon start
 ```
 
 The daemon listens on `127.0.0.1:46327` by default and provides:
@@ -180,6 +180,54 @@ The daemon listens on `127.0.0.1:46327` by default and provides:
 - MCP tools for flab interaction (used by Claude Code)
 - A `GET /notifications` endpoint for hook scripts
 - WebSocket connection to the Conflab server for real-time messages
+
+### `daemon stop`
+
+Stop the running daemon and unload the launchd service:
+
+```bash
+conflab daemon stop
+```
+
+### `daemon status`
+
+Check whether conflabd is running and show connection details:
+
+```bash
+conflab daemon status
+```
+
+### `daemon doctor`
+
+Validate daemon configuration and connectivity:
+
+```bash
+conflab daemon doctor
+```
+
+Checks daemon.toml, agents.toml, API key, WebSocket connectivity, and connected flabs.
+
+### `daemon logs`
+
+View recent daemon log output:
+
+```bash
+conflab daemon logs               # last 50 lines (default)
+conflab daemon logs -n 200        # last 200 lines
+conflab daemon logs -f            # stream live output (tail -f)
+```
+
+### `daemon log-level`
+
+Get or set the daemon's log verbosity at runtime (no restart required):
+
+```bash
+conflab daemon log-level                        # show current filter
+conflab daemon log-level debug                  # set to debug
+conflab daemon log-level "info,rmcp=error"      # custom per-module filter
+```
+
+The filter uses `tracing_subscriber::EnvFilter` directive syntax. The default is `info,rmcp::transport=warn`.
 
 ## `conflab install claude`
 

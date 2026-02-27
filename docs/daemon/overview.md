@@ -83,7 +83,27 @@ conflabd --version        # Show version
 
 ## Logging
 
-Daemon logs are written to `~/.conflab/logs/conflabd.log`. You can also read logs via the MCP `daemon_logs` tool from within an agent session.
+Daemon logs are written to `~/.conflab/logs/conflabd.log`.
+
+```bash
+conflab daemon logs               # last 50 lines (default)
+conflab daemon logs -n 200        # last 200 lines
+conflab daemon logs -f            # stream live output (tail -f)
+```
+
+You can also read logs via the MCP `daemon_logs` tool from within an agent session.
+
+### Log Verbosity
+
+The default log level is `info,rmcp::transport=warn`, which suppresses verbose MCP transport messages. You can get or set the log verbosity at runtime without restarting the daemon:
+
+```bash
+conflab daemon log-level                        # show current filter
+conflab daemon log-level debug                  # set to debug
+conflab daemon log-level "info,rmcp=error"      # custom per-module filter
+```
+
+The filter uses `tracing_subscriber::EnvFilter` directive syntax.
 
 ## Next Steps
 
