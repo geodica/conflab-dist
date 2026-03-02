@@ -105,7 +105,124 @@ conflab daemon log-level "info,rmcp=error"      # custom per-module filter
 
 The filter uses `tracing_subscriber::EnvFilter` directive syntax.
 
+## Prompt Templates
+
+conflabd serves prompt templates from `~/.conflab/prompts/`. Templates are `.cp.md` files -- Markdown with optional YAML frontmatter and `{{variable}}` interpolation. See [Prompt Templates](/app/help/daemon/templates) for the full format reference.
+
+### `GET /templates`
+
+List all templates as a tree matching the directory structure.
+
+```json
+[
+  {
+    "kind": "directory",
+    "name": "Coding",
+    "children": [
+      {
+        "kind": "template",
+        "name": "Code Review",
+        "template_id": "coding/code-review"
+      }
+    ]
+  },
+  {
+    "kind": "template",
+    "name": "Quick Question",
+    "template_id": "quick-question"
+  }
+]
+```
+
+Directories come first (alphabetical), then templates (alphabetical). Hidden directories are excluded.
+
+### `GET /templates/{path}`
+
+Get variable requirements for a template. The `{path}` is the template ID (e.g., `coding/code-review`).
+
+```json
+{
+  "template_id": "coding/code-review",
+  "title": "Code Review",
+  "description": "Review code for quality, bugs, and improvements",
+  "capabilities": ["clipboard"],
+  "runtime": "auto",
+  "variables": [
+    {
+      "name": "language",
+      "type": "choice",
+      "description": "Programming language",
+      "default": "Elixir",
+      "required": false,
+      "choices": ["Elixir", "Rust", "Swift", "Python", "TypeScript"]
+    },
+    {
+      "name": "code",
+      "type": "text",
+      "description": "Code to review",
+      "required": true,
+      "multiline": true
+    }
+  ]
+}
+```
+
+Returns **404** if the template does not exist.
+
+### `POST /templates/{path}`
+
+Execute a template with variable values.
+
+**Request:**
+
+```json
+{
+  "variables": {
+    "language": "Rust",
+    "code": "fn main() { println!(\"hello\"); }"
+  }
+}
+```
+
+**Success response (200):**
+
+```json
+{
+  "status": "ok",
+  "result": "Review the following Rust code...\n\nfn main() { println!(\"hello\"); }"
+}
+```
+
+**Validation error (422):**
+
+```json
+{
+  "status": "error",
+  "error": "validation_failed",
+  "details": [
+    {
+      "variable": "code",
+      "code": "required",
+      "message": "Required variable is empty"
+    }
+  ]
+}
+```
+
+**Not found (404):**
+
+```json
+{
+  "status": "error",
+  "error": "Template 'nonexistent' not found"
+}
+```
+
+Lua-powered templates ([Programmable Prompts](/app/help/daemon/programmable-prompts)) execute transparently -- the API is identical.
+
 ## Next Steps
 
-- [MCP Tools Reference](/app/help/daemon/mcp-tools) — complete list of tools available to agents
-- [Claude Code Integration](/app/help/cli/claude-code) — setting up Claude Code to use conflabd
+- [MCP Tools Reference](/app/help/daemon/mcp-tools) -- complete list of tools available to agents
+- [Prompt Templates](/app/help/daemon/templates) -- `.cp.md` format reference
+- [Programmable Prompts](/app/help/daemon/programmable-prompts) -- Lua-powered templates
+- [Claude Code Integration](/app/help/cli/claude-code) -- setting up Claude Code to use conflabd

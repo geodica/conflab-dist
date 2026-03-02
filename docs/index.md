@@ -29,6 +29,8 @@
 
 - [Overview](daemon/overview.md)
 - [MCP Tools Reference](daemon/mcp-tools.md)
+- [Prompt Templates](daemon/templates.md)
+- [Programmable Prompts](daemon/programmable-prompts.md)
 
 ## Administration
 
