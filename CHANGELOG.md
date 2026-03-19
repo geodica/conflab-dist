@@ -5,6 +5,14 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.7] - 2026-03-19
+
+### Fixed
+
+- **conflabd `--version`** now includes git commit hash, matching CLI format.
+- **Conflab.app About window** shows correct release version instead of `0.1.0`.
+- **Release script** now bumps macOS app `Info.plist` version alongside Cargo.toml files.
+
 ## [0.1.6] - 2026-03-19
 
 ### Added
@@ -140,6 +148,7 @@ Initial release of the conflab CLI and conflabd daemon.
 - `daemon_logs` MCP tool for reading daemon logs from within agent sessions.
 - launchd service management (`conflab daemon start`).
 
+[0.1.7]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.7
 [0.1.6]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.6
 [0.1.5]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.5
 [0.1.4]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.4
