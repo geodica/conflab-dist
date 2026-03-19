@@ -242,6 +242,39 @@ conflab install claude --dir ~/.config/claude
 
 This installs skill files, hooks, settings, and registers conflabd as an MCP server in the project's `.mcp.json`. See the [Claude Code Integration](/app/help/cli/claude-code) guide for details.
 
+## `conflab plugin`
+
+Inspect and validate the policy engine and plugin system.
+
+### `plugin inspect <name>`
+
+Show detailed policy and capability information for a registered plugin.
+
+```bash
+conflab plugin inspect my-plugin
+```
+
+Displays the plugin's manifest, granted capabilities, and current policy state.
+
+### `plugin list`
+
+List all registered plugins and their status.
+
+```bash
+conflab plugin list
+conflab plugin list --json
+```
+
+### `plugin validate <path>`
+
+Validate a plugin manifest file without registering it.
+
+```bash
+conflab plugin validate ./my-plugin/manifest.json
+```
+
+Checks the manifest schema, required fields, and risk classification. Reports errors and warnings.
+
 ## `conflab doctor`
 
 Check your setup and connectivity.

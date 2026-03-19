@@ -136,15 +136,94 @@ local content = bridge.clipboard_get()
 bridge.set_variable("clipboard_content", content)
 ```
 
+### MCP Tools (Capability: `mcp`)
+
+Invoke any MCP tool available to conflabd from Lua. Requires `mcp` in the template's `capabilities` array.
+
+```lua
+local result = bridge.mcp(tool_name, params)
+```
+
+- `tool_name` (string): the MCP tool name
+- `params` (table): tool parameters (converted to JSON internally)
+- Returns a Lua table/value converted from the tool's JSON result
+- Raises a Lua error on failure (unknown tool, invalid params, tool error)
+
+#### Available Tools
+
+| Tool                | Parameters                                   | Description                               |
+| ------------------- | -------------------------------------------- | ----------------------------------------- |
+| `list_flabs`        | `{}`                                         | List all flabs the daemon has access to   |
+| `flab_status`       | `{flab}`                                     | Get status of a specific flab             |
+| `list_participants` | `{flab}`                                     | List participants in a flab               |
+| `read_messages`     | `{flab, count?}`                             | Read recent messages from a flab          |
+| `flab_history`      | `{flab, after_seq_id, count?}`               | Get messages after a sequence ID          |
+| `check_messages`    | `{peek?}`                                    | Check for new messages addressed to agent |
+| `send_message`      | `{flab, body}`                               | Send a message to a flab                  |
+| `create_flab`       | `{name, description?}`                       | Create a new flab                         |
+| `create_invite`     | `{flab, role?, max_uses?, expires_in?}`      | Create an invite link for a flab          |
+| `summon_agent`      | `{flab, agent}`                              | Summon an agent into a flab               |
+| `create_task`       | `{flab, message_seq_id, title?, assignee?}`  | Create a task from a message              |
+| `complete_task`     | `{flab, task_id}`                            | Mark a task as complete                   |
+| `memory_store`      | `{content, entry_type, tags?, source_flab?}` | Store a memory entry                      |
+| `memory_search`     | `{query, limit?, entry_type?}`               | Search local memory entries               |
+| `needlecast`        | `{}`                                         | Push local memory to cloud                |
+| `resolve`           | `{url}`                                      | Resolve a `flab://` URL                   |
+| `daemon_logs`       | `{lines?, grep?}`                            | Read daemon log entries                   |
+
+Plugin tools are also accessible using the `plugin_name.tool_name` convention.
+
+#### Examples
+
+Read messages and summarise:
+
+```lua
+local messages = bridge.mcp("read_messages", { flab = "dev-chat", count = 10 })
+local summary = {}
+for i, msg in ipairs(messages) do
+  summary[#summary + 1] = msg.sender .. ": " .. msg.body
+end
+bridge.set_variable("recent_messages", table.concat(summary, "\n"))
+```
+
+Check for unread messages:
+
+```lua
+local inbox = bridge.mcp("check_messages", { peek = true })
+bridge.set_variable("unread_count", tostring(#inbox))
+```
+
+Search memory and incorporate context:
+
+```lua
+local memories = bridge.mcp("memory_search", { query = "project goals", limit = 5 })
+local context = {}
+for i, mem in ipairs(memories) do
+  context[#context + 1] = mem.content
+end
+bridge.set_variable("memory_context", table.concat(context, "\n---\n"))
+```
+
+#### Error Handling
+
+MCP tool errors surface as Lua runtime errors. Use `pcall` to handle them gracefully:
+
+```lua
+local ok, result = pcall(bridge.mcp, "read_messages", { flab = "nonexistent" })
+if not ok then
+  bridge.log("MCP error: " .. tostring(result))
+  bridge.set_variable("error", tostring(result))
+end
+```
+
 ### Future Capabilities (Stubs)
 
 These capabilities are declared but not yet implemented. Calling them returns a "not yet implemented" error and adds a warning to the response.
 
-| Capability    | Function                  | Description                      |
-| ------------- | ------------------------- | -------------------------------- |
-| `mcp`         | `bridge.mcp(...)`         | MCP tool invocation via conflabd |
-| `llm`         | `bridge.llm(...)`         | LLM API calls                    |
-| `applescript` | `bridge.applescript(...)` | macOS GUI automation             |
+| Capability    | Function                  | Description          |
+| ------------- | ------------------------- | -------------------- |
+| `llm`         | `bridge.llm(...)`         | LLM API calls        |
+| `applescript` | `bridge.applescript(...)` | macOS GUI automation |
 
 ## Capabilities
 
@@ -325,6 +404,63 @@ Review the following {{language}} code from my clipboard:
 ```
 
 Focus on correctness, idiomatic style, and potential bugs.
+````
+
+### MCP-Powered Review
+
+Read recent messages and summarise them with context from memory:
+
+````markdown
+---
+title: Flab Summary
+capabilities:
+  - mcp
+variables:
+  flab:
+    type: string
+    required: true
+    description: "Flab to summarise"
+  count:
+    type: string
+    default: "10"
+---
+
+```lua conflab-exec
+local flab = bridge.get_variable("flab")
+local count = tonumber(bridge.get_variable("count")) or 10
+
+-- Fetch recent messages
+local messages = bridge.mcp("read_messages", { flab = flab, count = count })
+local lines = {}
+for i, msg in ipairs(messages) do
+  lines[#lines + 1] = msg.sender .. ": " .. msg.body
+end
+bridge.set_variable("messages_text", table.concat(lines, "\n"))
+
+-- Search memory for context about this flab
+local ok, memories = pcall(bridge.mcp, "memory_search", {
+  query = flab .. " context",
+  limit = 3
+})
+if ok and #memories > 0 then
+  local ctx = {}
+  for i, mem in ipairs(memories) do
+    ctx[#ctx + 1] = mem.content
+  end
+  bridge.set_variable("memory_context", table.concat(ctx, "\n"))
+else
+  bridge.set_variable("memory_context", "(no relevant memories)")
+end
+```
+
+Summarise the recent conversation in **{{flab}}**:
+
+{{messages_text}}
+
+Context from memory:
+{{memory_context}}
+
+Provide a concise summary of the key topics, decisions, and action items.
 ````
 
 ## See Also
