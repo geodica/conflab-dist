@@ -5,6 +5,43 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2026-03-19
+
+### Added
+
+- **Envoy workflow engine** — multi-step workflow execution in conflabd with step sequencing, error handling policies (`abort`/`continue`/`retry`), and status persistence in SQLite.
+- **Policy inspection CLI** — `conflab plugin inspect`, `conflab plugin list`, and `conflab plugin validate` commands for viewing policy engine state and plugin manifests.
+- **AppleScript bridge** — conflabd exposes scriptable actions for macOS automation and Automator workflows.
+- **Prompt test framework** — validation fixtures, Lua execution fixtures, and a shell smoke-test runner (`scripts/smoke.sh`) for template quality assurance.
+- **Build info embedding** — all built artifacts (CLI, daemon, macOS app, web footer) now display their exact git commit hash alongside the version number.
+
+### Security
+
+- **Lua sandbox hardening** — tighter stdlib restrictions, explicit capability gating, SAFETY documentation on all unsafe blocks.
+- **MCP bridge security** — stricter policy enforcement on tool access.
+- **Plugin manifest validation** — fail-open risk classification fixed to default-deny.
+- **Daemon robustness** — mutex poisoning in Lua bridge now propagates errors instead of crashing; clock anomaly handling prevents daemon panics; unknown status values logged as warnings.
+
+### Fixed
+
+- CLI no longer panics on missing home directory — all path-resolution functions return errors gracefully.
+- CLI validates required API response fields instead of silently defaulting to empty strings.
+- UTF-8 safe key truncation — no longer panics on multi-byte characters.
+- Swift macOS app: 5 force unwraps eliminated, 12 silent `try?` sites now log errors.
+
+### Changed
+
+- **Total Codebase Audit** — 49 violations identified and remediated across Elixir (638 tests), Rust (575 tests), and Swift. Zero regressions.
+- Display name logic unified into single `Conflab.DisplayName` module (Highlander Rule).
+- Command execution extracted from FlabLive into `CommandExecutor` with effect-tuple pattern.
+- Avatar URL normalization via atomic Ash change (`NULLIF(TRIM(...))`).
+- Slug generation deduplicated into single `Conflab.Slug` module.
+- CLI utility functions consolidated into shared `util.rs` module.
+- chat.rs WebSocket handler refactored with shared `run_api_call` helper.
+- Swift template interpolation consolidated into `TemplateService.substituteVariable`.
+- About window extracted into `AboutWindowController`.
+- 19 multi-head function refactors across Elixir codebase.
+
 ## [0.1.5] - 2026-03-02
 
 ### Added
@@ -103,6 +140,7 @@ Initial release of the conflab CLI and conflabd daemon.
 - `daemon_logs` MCP tool for reading daemon logs from within agent sessions.
 - launchd service management (`conflab daemon start`).
 
+[0.1.6]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.6
 [0.1.5]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.5
 [0.1.4]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.4
 [0.1.3]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.3
