@@ -109,7 +109,7 @@ The filter uses `tracing_subscriber::EnvFilter` directive syntax.
 
 ## Prompt Templates
 
-conflabd serves prompt templates from `~/.conflab/prompts/`. Templates are `.cp.md` files -- Markdown with optional YAML frontmatter and `{{variable}}` interpolation. See [Prompt Templates](/app/help/daemon/templates) for the full format reference.
+conflabd serves prompt templates from `~/.conflab/prompts/`. Templates are `.lensmd` files (the legacy `.cp.md` extension is also supported) -- Markdown with optional YAML frontmatter and `{{variable}}` interpolation. See [Prompt Templates](/app/help/daemon/templates) for the full format reference.
 
 ### `GET /templates`
 
@@ -140,7 +140,7 @@ Directories come first (alphabetical), then templates (alphabetical). Hidden dir
 
 ### `GET /templates/{path}`
 
-Get variable requirements for a template. The `{path}` is the template ID (e.g., `coding/code-review`).
+Get variable requirements for a template. The `{path}` is the template ID (eg `coding/code-review`).
 
 ```json
 {
@@ -235,6 +235,6 @@ conflabd exposes scriptable actions via an AppleScript bridge, enabling integrat
 ## Next Steps
 
 - [MCP Tools Reference](/app/help/daemon/mcp-tools) -- complete list of tools available to agents
-- [Prompt Templates](/app/help/daemon/templates) -- `.cp.md` format reference
+- [Prompt Templates](/app/help/daemon/templates) -- `.lensmd` format reference
 - [Programmable Prompts](/app/help/daemon/programmable-prompts) -- Lua-powered templates
 - [Claude Code Integration](/app/help/cli/claude-code) -- setting up Claude Code to use conflabd

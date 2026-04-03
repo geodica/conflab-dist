@@ -4,11 +4,11 @@ title: Prompt Templates
 
 # Prompt Templates
 
-Conflab Prompt templates (`.cp.md` files) are Markdown-based prompt templates with optional YAML frontmatter for metadata and `{{variable}}` interpolation. Simple templates are plain Markdown; structured templates add typed variable declarations via frontmatter.
+Conflab Prompt templates (`.lensmd` files) are Markdown-based prompt templates with optional YAML frontmatter for metadata and `{{variable}}` interpolation. Simple templates are plain Markdown; structured templates add typed variable declarations via frontmatter. The legacy `.cp.md` extension is also supported.
 
 ## File Structure
 
-A `.cp.md` file has two parts:
+A `.lensmd` file has two parts:
 
 ```
 ---
@@ -43,11 +43,11 @@ All fields are optional. Unknown keys are ignored.
 
 If `title` is absent, it is derived from the filename:
 
-1. Strip the `.cp.md` extension
+1. Strip the `.lensmd` extension
 2. Replace hyphens (`-`) and underscores (`_`) with spaces
 3. Apply title case (capitalise first letter of each word)
 
-Example: `code-review.cp.md` becomes "Code Review".
+Example: `code-review.lensmd` becomes "Code Review".
 
 ### Runtime
 
@@ -171,13 +171,13 @@ Templates live in `~/.conflab/prompts/`. The directory structure maps to menu hi
 ```
 ~/.conflab/prompts/
   coding/
-    review.cp.md          -> Coding > Review
-    refactor.cp.md        -> Coding > Refactor
+    review.lensmd          -> Coding > Review
+    refactor.lensmd        -> Coding > Refactor
   writing/
-    blog-post.cp.md       -> Writing > Blog Post
+    blog-post.lensmd       -> Writing > Blog Post
     email/
-      follow-up.cp.md     -> Writing > Email > Follow Up
-  quick-question.cp.md    -> Quick Question
+      follow-up.lensmd     -> Writing > Email > Follow Up
+  quick-question.lensmd    -> Quick Question
 ```
 
 ### Sort Order
@@ -187,16 +187,16 @@ Templates live in `~/.conflab/prompts/`. The directory structure maps to menu hi
 
 ### Hidden Directories
 
-Directories starting with `.` are skipped entirely. Only `.cp.md` files are included; other file types are ignored. Empty directories (containing no `.cp.md` files) are excluded.
+Directories starting with `.` are skipped entirely. Only `.lensmd` files are included; other file types are ignored. Empty directories (containing no `.lensmd` files) are excluded.
 
 ### Template ID
 
-Each template has an ID derived from its path relative to the prompts root, without the `.cp.md` extension:
+Each template has an ID derived from its path relative to the prompts root, without the `.lensmd` extension:
 
-| File Path                                | Template ID     |
-| ---------------------------------------- | --------------- |
-| `~/.conflab/prompts/quick.cp.md`         | `quick`         |
-| `~/.conflab/prompts/coding/review.cp.md` | `coding/review` |
+| File Path                                 | Template ID     |
+| ----------------------------------------- | --------------- |
+| `~/.conflab/prompts/quick.lensmd`         | `quick`         |
+| `~/.conflab/prompts/coding/review.lensmd` | `coding/review` |
 
 The template ID is used in API calls to reference a specific template.
 

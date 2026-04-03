@@ -4,7 +4,7 @@ title: Programmable Prompts
 
 # Programmable Prompts
 
-Programmable prompts are `.cp.md` templates that contain Lua code blocks. The Lua code runs before interpolation, allowing templates to compute variables dynamically, process JSON data, read the clipboard, and apply conditional logic.
+Programmable prompts are `.lensmd` templates that contain Lua code blocks. The Lua code runs before interpolation, allowing templates to compute variables dynamically, process JSON data, read the clipboard, and apply conditional logic.
 
 ## When to Use Programmable Prompts
 
@@ -465,5 +465,5 @@ Provide a concise summary of the key topics, decisions, and action items.
 
 ## See Also
 
-- [Prompt Templates](/app/help/daemon/templates) -- `.cp.md` format reference
+- [Prompt Templates](/app/help/daemon/templates) -- `.lensmd` format reference
 - [Daemon Overview](/app/help/daemon/overview) -- Template management API endpoints
