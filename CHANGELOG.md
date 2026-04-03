@@ -5,6 +5,25 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.8] - 2026-03-23
+
+### Added
+
+- **Workflow step output** -- `bridge.output(table)` Lua function for structured JSON output per step. Logs captured via `bridge.log()`. Both persisted and exposed via GraphQL.
+- **Interactive workflow prompts** -- steps declare prompt schemas (string, choice, boolean, number, text). Engine pauses at prompt steps. Web UI renders auto-generated forms.
+- **Workflow pagination** -- `offset` parameter on `workflows` query, 5 per page with Newer/Older controls.
+- **Workflow deletion** -- `deleteWorkflow` mutation with inline two-step confirmation in web UI.
+- **Workflow UI** -- browser-bridged workflow management page (approve, abort, monitor, view output).
+- **Simplified macOS menu** -- 8 items, persistent Status Window (5 tabs).
+- **Workflow-aware Prompts menu** -- macOS app routes workflow templates to `runWorkflow` mutation.
+
+### Changed
+
+- Workflow progress display fixed (0-indexed to 1-indexed).
+- Execution-level variables exposed in GraphQL with click-to-copy in web UI.
+- Structured/JSON view toggle for workflow output.
+- Code quality: Highlander deduplication (approve/abort handlers, StepResult construction, onclick handlers), PFIC refactors (Swift templateSelected, extractValue).
+
 ## [0.1.7] - 2026-03-19
 
 ### Fixed
@@ -148,6 +167,7 @@ Initial release of the conflab CLI and conflabd daemon.
 - `daemon_logs` MCP tool for reading daemon logs from within agent sessions.
 - launchd service management (`conflab daemon start`).
 
+[0.1.8]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.8
 [0.1.7]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.7
 [0.1.6]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.6
 [0.1.5]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.5
