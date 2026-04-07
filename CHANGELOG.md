@@ -5,6 +5,25 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.11] - 2026-04-07
+
+### Added
+
+- **Daemon API authentication** -- shared-secret auth on the management API. Password auto-generated on first start, stored in daemon.toml and macOS Keychain. All endpoints except `/health` require a Bearer token. CORS locked to conflab.space + localhost.
+- **Three auth surfaces** -- zero-friction authentication for all users:
+  - **Menubar app**: "Open Conflab" (Cmd+O) reads password from Keychain, authenticates, opens browser pre-authenticated.
+  - **Browser redirect**: OAuth-style `/authorize` page on the daemon. Click Approve, redirected back with token.
+  - **CLI**: `conflab daemon auth` prints a session token, `conflab daemon auth --copy` copies to clipboard, `conflab daemon password` shows the raw password.
+- **Boot token for MCP** -- daemon writes `~/.config/conflab/mgmt_token` at startup so Claude Code authenticates automatically.
+- **`daemon_graphql()` Highlander** -- single code path for all CLI-to-daemon GraphQL calls with automatic token injection.
+
+### Security
+
+- Management API no longer accepts unauthenticated requests (was: `CorsLayer::permissive()` with no auth).
+- CORS restricted to explicit origin allowlist (conflab.space, localhost:4000, localhost:4001).
+- Open-redirect protection on `/authorize` endpoint (only allows conflab.space and localhost redirects).
+- Brute-force protection: 1-second delay on failed `/auth` attempts.
+
 ## [0.1.8] - 2026-03-23
 
 ### Added
