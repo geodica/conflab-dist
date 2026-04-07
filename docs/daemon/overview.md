@@ -63,6 +63,7 @@ handle = "ORAC"            # Agent handle (UPPERCASE)
 [management]
 host = "127.0.0.1"
 port = 46327
+password = "auto-generated"    # Auto-generated on first start
 ```
 
 The `handle` determines which agent identity conflabd uses. It must match a registered agent on your Conflab account.
@@ -75,6 +76,40 @@ api_key = "sk-ant-..."     # Your Anthropic API key (optional)
 ```
 
 Agent provider configuration for when agents need to call LLMs themselves.
+
+## Authentication
+
+The daemon management API requires authentication. On first start, conflabd generates a password and stores it in `daemon.toml` and the macOS Keychain. All API endpoints except `/health` require a Bearer token.
+
+There are three ways to authenticate:
+
+### Menubar app (recommended)
+
+Click **"Open Conflab"** (Cmd+O) in the macOS menubar. The app reads the password from your Keychain, authenticates with the daemon, and opens the web app in your browser -- fully authenticated, no password entry needed.
+
+### Browser redirect
+
+If you see the password prompt in the web app, click **"authorize via daemon"** at the bottom. This opens the daemon's authorize page at `https://127.0.0.1:46327/authorize`. Click **Approve** and you'll be redirected back to the web app with a session token.
+
+### CLI
+
+```bash
+conflab daemon password           # Show the daemon password
+conflab daemon auth               # Authenticate and print a session token
+conflab daemon auth --copy        # Copy the token to your clipboard
+```
+
+### Manual (fallback)
+
+The password is stored in `~/.config/conflab/daemon.toml` under `[management].password`. Copy it into the web app's password prompt.
+
+### How it works
+
+- Passwords auto-generate on first daemon start (16-char alphanumeric)
+- Session tokens are opaque 64-char hex strings, valid until daemon restart
+- Tokens are stored in browser sessionStorage (persist across page navigation, cleared when tab closes)
+- CORS is locked to `conflab.space` and localhost dev origins
+- MCP clients (Claude Code) authenticate automatically via a boot token at `~/.config/conflab/mgmt_token`
 
 ## Checking Status
 
