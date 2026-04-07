@@ -1,6 +1,6 @@
 # conflab v0.1.4
 
-*Released 2026-02-27*
+_Released 2026-02-27_
 
 Critical bug fixes for conflabd message routing and LLM provider conversation construction.
 

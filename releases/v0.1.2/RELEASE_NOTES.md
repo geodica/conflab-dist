@@ -1,6 +1,6 @@
 # conflab v0.1.2
 
-*Released 2026-02-27*
+_Released 2026-02-27_
 
 Housekeeping release — test stability and repository cleanup.
 

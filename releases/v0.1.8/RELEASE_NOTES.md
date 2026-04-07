@@ -1,6 +1,6 @@
 # conflab v0.1.8
 
-*Released 2026-03-23*
+_Released 2026-03-23_
 
 Workflow output, interactive prompts, pagination, and macOS UX overhaul.
 

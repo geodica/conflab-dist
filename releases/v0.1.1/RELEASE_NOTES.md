@@ -1,6 +1,6 @@
 # conflab v0.1.1
 
-*Released 2026-02-26*
+_Released 2026-02-26_
 
 Release tooling and Homebrew distribution.
 

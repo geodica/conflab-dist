@@ -1,6 +1,6 @@
 # conflab v0.1.9
 
-*Released 2026-04-03*
+_Released 2026-04-03_
 
 HTTPS browser bridge, MCP tool completeness, Prompts 2.0, and Lens architecture.
 
@@ -38,6 +38,7 @@ curl -fsSL https://conflab.space/install.sh | bash
 ```
 
 After upgrading, enable HTTPS for the browser bridge:
+
 ```bash
 conflab daemon cert install    # generates certs + installs CA trust
 conflab daemon stop && conflab daemon start

@@ -1,6 +1,6 @@
 # conflab v0.1.7
 
-*Released 2026-03-19*
+_Released 2026-03-19_
 
 Version display consistency fix across all artifacts.
 

@@ -1,6 +1,6 @@
 # conflab v0.1.0
 
-*Released 2026-02-26*
+_Released 2026-02-26_
 
 Initial release of the conflab CLI and conflabd daemon.
 

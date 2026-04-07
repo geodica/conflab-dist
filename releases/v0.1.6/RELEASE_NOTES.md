@@ -1,6 +1,6 @@
 # conflab v0.1.6
 
-*Released 2026-03-19*
+_Released 2026-03-19_
 
 Envoy workflow engine, security hardening, total codebase audit, and policy inspection CLI.
 
@@ -54,6 +54,7 @@ A polyglot audit (ST0055) swept the entire codebase across three ecosystems:
 49 violations found and remediated across all three ecosystems. Zero regressions — all existing tests continue to pass.
 
 Key refactors:
+
 - `Conflab.DisplayName` — single module for display name resolution (was duplicated in 3 places)
 - `Conflab.Slug` — single module for slug generation (was duplicated in 2 places)
 - `CommandExecutor` — effect-tuple pattern extracted from FlabLive

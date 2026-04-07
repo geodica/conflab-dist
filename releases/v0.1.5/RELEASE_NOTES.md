@@ -1,6 +1,6 @@
 # conflab v0.1.5
 
-*Released 2026-03-02*
+_Released 2026-03-02_
 
 Native macOS app, prompt template engine, and programmable prompts with Lua.
 

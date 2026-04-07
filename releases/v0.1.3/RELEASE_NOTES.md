@@ -1,6 +1,6 @@
 # conflab v0.1.3
 
-*Released 2026-02-27*
+_Released 2026-02-27_
 
 Bug fixes for conflabd and new daemon management commands.
 
