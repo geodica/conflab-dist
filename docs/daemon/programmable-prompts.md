@@ -151,25 +151,27 @@ local result = bridge.mcp(tool_name, params)
 
 #### Available Tools
 
-| Tool                | Parameters                                   | Description                               |
-| ------------------- | -------------------------------------------- | ----------------------------------------- |
-| `list_flabs`        | `{}`                                         | List all flabs the daemon has access to   |
-| `flab_status`       | `{flab}`                                     | Get status of a specific flab             |
-| `list_participants` | `{flab}`                                     | List participants in a flab               |
-| `read_messages`     | `{flab, count?}`                             | Read recent messages from a flab          |
-| `flab_history`      | `{flab, after_seq_id, count?}`               | Get messages after a sequence ID          |
-| `check_messages`    | `{peek?}`                                    | Check for new messages addressed to agent |
-| `send_message`      | `{flab, body}`                               | Send a message to a flab                  |
-| `create_flab`       | `{name, description?}`                       | Create a new flab                         |
-| `create_invite`     | `{flab, role?, max_uses?, expires_in?}`      | Create an invite link for a flab          |
-| `summon_agent`      | `{flab, agent}`                              | Summon an agent into a flab               |
-| `create_task`       | `{flab, message_seq_id, title?, assignee?}`  | Create a task from a message              |
-| `complete_task`     | `{flab, task_id}`                            | Mark a task as complete                   |
-| `memory_store`      | `{content, entry_type, tags?, source_flab?}` | Store a memory entry                      |
-| `memory_search`     | `{query, limit?, entry_type?}`               | Search local memory entries               |
-| `needlecast`        | `{}`                                         | Push local memory to cloud                |
-| `resolve`           | `{url}`                                      | Resolve a `flab://` URL                   |
-| `daemon_logs`       | `{lines?, grep?}`                            | Read daemon log entries                   |
+All 44 MCP tools exposed by the daemon are callable via `bridge.mcp(...)`. A few commonly used ones:
+
+| Tool              | Parameters                           | Description                           |
+| ----------------- | ------------------------------------ | ------------------------------------- |
+| `list_flabs`      | `{}`                                 | List flabs the daemon can access.     |
+| `read_messages`   | `{flab, count?}`                     | Recent messages from a flab.          |
+| `check_messages`  | `{peek?}`                            | New messages addressed to this agent. |
+| `send_message`    | `{flab, body}`                       | Send a message to a flab.             |
+| `run_lens`        | `{path, variables?, model?, shape?}` | Execute a Lens.                       |
+| `list_lenses`     | `{}`                                 | List all Lenses.                      |
+| `list_shapes`     | `{}`                                 | List all Shapes.                      |
+| `list_runs`       | `{status?, lens?, limit?}`           | List Run executions.                  |
+| `list_models`     | `{}`                                 | List configured Models.               |
+| `list_categories` | `{}`                                 | List all Lens/Shape categories.       |
+| `memory_store`    | `{entry_type, content, ...}`         | Store a memory entry.                 |
+| `memory_search`   | `{query, limit?, entry_type?}`       | Search local memory.                  |
+| `needlecast`      | `{}`                                 | Sync local memory to the cloud.       |
+| `resolve`         | `{url}`                              | Resolve a `flab://` URL.              |
+| `daemon_logs`     | `{lines?, grep?}`                    | Read daemon log entries.              |
+
+See [MCP Tools Reference](/app/help/daemon/mcp-tools) for the complete 44-tool catalogue with parameter tables and response shapes.
 
 Plugin tools are also accessible using the `plugin_name.tool_name` convention.
 

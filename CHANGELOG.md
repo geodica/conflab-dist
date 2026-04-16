@@ -5,6 +5,57 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-04-15
+
+First minor release. Ships the public Lens/Shape/Prompt Directory, a curated launch catalog, public unauthenticated browse, Atom feeds, full daemon API coverage on CLI and MCP, Admin 2.0, Dashboard 2.0, UGC moderation, macOS first-run CA trust UX, a signed and notarised macOS installer with first-run wizard, the AGENT→MODEL terminology rename, and a complete documentation refresh.
+
+### Added
+
+- **Public Lens & Shape Directory (LSD)** -- browse, detail, tags, categories, ratings, reviews, fork lineage, local↔catalog sync, publish/import with provenance. Routes at `/app/lsd` (authenticated) and `/lsd` (public).
+- **Launch content pipeline** -- pluggable crawler (`Conflab.Catalog.Sourcing.Crawler`) with five source adapters, Oban job + mix task entry points, classify/dedup/admit/elaborate pipeline. Ships with 40 hand-authored Lenses and 1,700 attributed Prompt entries.
+- **Attribution and compliance policy** -- `priv/docs/attribution.md` documents crawling, licensing, and credit posture. Crawlers honour robots.txt and per-site ToS.
+- **Public unauthenticated LSD browse** -- `/lsd` is viewable without signing in. Titles, descriptions, authors, categories, tags, and ratings are public; entry bodies are gated behind a "Sign in to view" CTA.
+- **Atom feeds** -- RFC 4287 Atom 1.0 feeds over the public catalog: combined, per-kind (lenses, themes, prompts), and per-category. `<link rel="alternate">` discovery in page heads. HTML index at `/feeds`.
+- **Per-category README tab** -- new "Categories" tab on `/app/lsd` renders the 12 canonical category READMEs with a "Browse {{category}} lenses" handoff.
+- **Full daemon API on CLI** -- 48 daemon GraphQL operations now reachable from `conflab`: lenses, shapes, runs, agents, policy, categories.
+- **Full daemon API on MCP** -- 18 new MCP tools covering lens/shape/run/agent/category management.
+- **Filesystem watcher** -- conflabd watches `~/.conflab/db/` via the `notify` crate. External edits sync to the SQLite index automatically.
+- **Admin 2.0** -- sectioned admin console under `Conflab.Admin.*` with shared nav: Overview, Users, Curation, Moderation, Settings, Crawl.
+- **Dashboard 2.0** -- `/app` is now a personal platform-wide dashboard with next-best-action cards across flabs, lenses, shapes, catalog, and library.
+- **UGC moderation** -- polymorphic `Flag` resource backing Flag buttons on reviews and entries, auto-hide at a configurable threshold, admin moderation queue, published-lens pending state with trusted-author auto-approval, per-user rate limits on review/flag/publish.
+- **macOS first-run CA trust UX** -- `NSAlert` first-run dialog, dedicated CA Trust settings tab, `TrustInstallService` in Swift with 9 unit tests. `conflab doctor --json` and `conflab daemon cert install --plain` support the flow.
+- **Signed + notarised macOS installer** -- double-click `Conflab-arm64.pkg` installs Conflab.app to `/Applications`, `conflab` and `conflabd` to `/usr/local/bin`, and a per-user LaunchAgent. Signed with a Developer ID Application + Installer cert pair under Geodica (Team `76BQL8L47U`), notarised by Apple, stapled, Gatekeeper-silent. Download from [conflab.space/download/mac](https://conflab.space/download/mac).
+- **First-run setup wizard** -- Conflab.app auto-launches after install and walks the user through sign-in (verified against the server before saving), Conflab Local CA install, and daemon start. No terminal required. Re-runnable from Settings → General → Setup...
+- **`conflab install setup`** -- new CLI command backing the wizard: `--bundle <path>` applies a JSON setup bundle, `--dump-current` emits the current masked on-disk profile, `--interactive` prompts in the terminal.
+- **`conflab uninstall`** -- plan-then-execute uninstall with `--dry-run`, `--yes`, and `--nuke-data`. Quits the menubar app, unloads the LaunchAgent, removes binaries, app bundle, and `pkgutil` receipts; preserves `~/.conflab/` by default.
+- **Homebrew cask** -- `brew install --cask geodica/conflab/conflab` wraps the signed installer. Coexists with the CLI-only formula; `/usr/local/bin` takes precedence on PATH.
+- **Homebrew formula refactored to CLI-only** -- no cellar `.app`; the cask owns the GUI. Both can be installed together.
+- **`install.sh --with-app`** -- shell script gains a flag that downloads and launches the signed `.pkg` on macOS arm64.
+- **Daemon-bridge health hysteresis** -- three consecutive health failures required before the browser UI flips to "Daemon Unreachable"; one success flips it back instantly.
+- **Homepage refresh** -- new homepage covers the five pillars Conflab ships: Flabs, Programmable Prompts, Promptable Problems, LSD, Research.
+- **Help landing page** -- `/app/help` renders `priv/docs/index.md` as a hero-icon landing page.
+- **Big docs update** -- 33 user-facing docs refreshed across Concepts, Getting Started, Using Conflab, CLI, Daemon, and Admin. Full LLM-detrope pass. Context-help map fixed for Catalog, Lenses, and Shapes.
+
+### Changed
+
+- **AGENT vs MODEL rename** -- "Agent" (when referring to an LLM provider config like `claude-opus`) is now "Model" throughout the codebase, schema, UI, and docs. "Agent" is reserved for Conflab chat participants (`^ORAC`, `^NEXUS`). Vocabulary-breaking for external integrations that referenced the old usage.
+- Swift codebase reformatted to 2-space indent.
+- `ConflabWeb.CatalogLive.MockData` retired; `Conflab.Catalog.Bootstrap.run!/0` is the seeded-catalog entry point.
+- `/app/help` renders the landing page directly instead of redirecting to the first content page.
+
+### Fixed
+
+- conflabd MCP auth: OAuth 2.0 discovery + PKCE flow.
+- Classifier cache resilience -- incremental save + model-agnostic lookup.
+- Daemon `clear-stats` handler shadowed by catch-all `daemon-result`.
+- Review owner attribution corrected under the new terminology.
+- Stale help-index redirect test.
+
+### Security
+
+- UGC surfaces have explicit auto-hide thresholds, rate limits, and pre-publish gating by default.
+- Crawler robots.txt + ToS enforcement across all source adapters.
+
 ## [0.1.11] - 2026-04-07
 
 ### Added
@@ -186,6 +237,7 @@ Initial release of the conflab CLI and conflabd daemon.
 - `daemon_logs` MCP tool for reading daemon logs from within agent sessions.
 - launchd service management (`conflab daemon start`).
 
+[0.2.0]: https://github.com/geodica/conflab-dist/releases/tag/v0.2.0
 [0.1.8]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.8
 [0.1.7]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.7
 [0.1.6]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.6

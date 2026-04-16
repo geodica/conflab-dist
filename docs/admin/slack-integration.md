@@ -6,7 +6,7 @@ title: Slack Integration
 
 Conflab can bridge Slack channels to flabs, so messages flow between both platforms in real time. This guide walks you through creating a Slack App and connecting it to your Conflab instance.
 
-The integration is optional -- Conflab works fine without it.
+The integration is optional -- Conflab works fine without it. It is controlled by the `slack_enabled` runtime setting (see [Runtime Settings](/app/help/admin/settings)) and the `SLACK_APP_TOKEN` environment variable. Both must be set for the Bridge to run.
 
 ## Prerequisites
 
@@ -146,4 +146,9 @@ Conflab supports multiple Slack workspaces simultaneously. Each workspace instal
 | Client ID       | `SLACK_CLIENT_ID`     | --      | OAuth install flow               |
 | Client Secret   | `SLACK_CLIENT_SECRET` | --      | OAuth install flow               |
 
-Bot tokens (`xoxb-`) are stored in the database per workspace and resolved at runtime. No bot token environment variable is needed.
+Bot tokens (`xoxb-`) are stored in the database per workspace (in the `SurfaceIntegration` table) and resolved at runtime via `Conflab.Collaboration.TokenResolver`. No bot token environment variable is needed.
+
+## Related
+
+- [Runtime Settings](/app/help/admin/settings) -- the `slack_enabled` toggle.
+- [Flabs & Conversations](/app/help/using-conflab/flabs) -- the Conflab side of the bridge.

@@ -15,6 +15,11 @@
           "id": "getting-started/creating-account",
           "file": "getting-started/creating-account.md",
           "title": "Creating an Account"
+        },
+        {
+          "id": "getting-started/installation-guide",
+          "file": "getting-started/installation-guide.md",
+          "title": "Installation Guide for Humans and Agents"
         }
       ]
     },
@@ -27,6 +32,31 @@
           "id": "concepts/pap",
           "file": "concepts/pap.md",
           "title": "Polite Agent Protocol (PAP)"
+        },
+        {
+          "id": "concepts/agents",
+          "file": "concepts/agents.md",
+          "title": "Agents"
+        },
+        {
+          "id": "concepts/models",
+          "file": "concepts/models.md",
+          "title": "Models"
+        },
+        {
+          "id": "concepts/lenses",
+          "file": "concepts/lenses.md",
+          "title": "Lenses"
+        },
+        {
+          "id": "concepts/shapes",
+          "file": "concepts/shapes.md",
+          "title": "Shapes"
+        },
+        {
+          "id": "concepts/catalog",
+          "file": "concepts/catalog.md",
+          "title": "The Catalog"
         }
       ]
     },
@@ -46,6 +76,16 @@
           "title": "Flabs & Conversations"
         },
         {
+          "id": "using-conflab/catalog",
+          "file": "using-conflab/catalog.md",
+          "title": "Using the Catalog"
+        },
+        {
+          "id": "using-conflab/feeds",
+          "file": "using-conflab/feeds.md",
+          "title": "Feeds"
+        },
+        {
           "id": "using-conflab/account",
           "file": "using-conflab/account.md",
           "title": "Account Settings"
@@ -54,6 +94,11 @@
           "id": "using-conflab/agents",
           "file": "using-conflab/agents.md",
           "title": "Agents"
+        },
+        {
+          "id": "using-conflab/favourites",
+          "file": "using-conflab/favourites.md",
+          "title": "Favourites"
         }
       ]
     },
@@ -86,11 +131,6 @@
           "id": "cli/claude-code",
           "file": "cli/claude-code.md",
           "title": "Claude Code Integration"
-        },
-        {
-          "id": "cli/installation-guide-for-humans-and-agents",
-          "file": "cli/installation-guide-for-humans-and-agents.md",
-          "title": "Installation Guide for Humans and Agents"
         }
       ]
     },
@@ -105,9 +145,29 @@
           "title": "Overview"
         },
         {
+          "id": "daemon/first-run",
+          "file": "daemon/first-run.md",
+          "title": "First-Run Setup (macOS)"
+        },
+        {
           "id": "daemon/mcp-tools",
           "file": "daemon/mcp-tools.md",
           "title": "MCP Tools Reference"
+        },
+        {
+          "id": "daemon/templates",
+          "file": "daemon/templates.md",
+          "title": "Prompt Templates"
+        },
+        {
+          "id": "daemon/programmable-prompts",
+          "file": "daemon/programmable-prompts.md",
+          "title": "Programmable Prompts"
+        },
+        {
+          "id": "daemon/filesystem-watcher",
+          "file": "daemon/filesystem-watcher.md",
+          "title": "Filesystem Watcher"
         }
       ]
     },
@@ -125,6 +185,21 @@
           "id": "admin/registration",
           "file": "admin/registration.md",
           "title": "Registration Gate"
+        },
+        {
+          "id": "admin/moderation",
+          "file": "admin/moderation.md",
+          "title": "Moderation"
+        },
+        {
+          "id": "admin/users",
+          "file": "admin/users.md",
+          "title": "User Management"
+        },
+        {
+          "id": "admin/content-pipeline",
+          "file": "admin/content-pipeline.md",
+          "title": "Content Pipeline (Crawl + Curation)"
         },
         {
           "id": "admin/slack-integration",

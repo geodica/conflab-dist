@@ -4,6 +4,35 @@ set -euo pipefail
 GH_REPO="geodica/conflab-dist"
 INSTALL_DIR="${CONFLAB_INSTALL_DIR:-/usr/local/bin}"
 BINARY_NAME="conflab"
+WITH_APP=0
+
+# --- Args ---
+
+for arg in "$@"; do
+  case "$arg" in
+    --with-app)
+      WITH_APP=1
+      ;;
+    -h|--help)
+      cat <<EOF
+Conflab installer
+
+Usage:
+  install.sh              Install the conflab CLI only
+  install.sh --with-app   Download and launch the signed macOS .pkg installer
+                          (macOS arm64 only; installs app + CLI + daemon)
+
+Env:
+  CONFLAB_INSTALL_DIR     Override CLI install directory (default /usr/local/bin)
+EOF
+      exit 0
+      ;;
+    *)
+      echo "Error: unknown argument: $arg (try --help)"
+      exit 1
+      ;;
+  esac
+done
 
 # --- Detect platform ---
 
@@ -35,7 +64,42 @@ detect_platform() {
   echo "$target"
 }
 
-# --- Main ---
+# --- --with-app path (macOS pkg installer) ---
+
+if [ "$WITH_APP" = "1" ]; then
+  if [ "$(uname -s)" != "Darwin" ] || [ "$(uname -m)" != "arm64" ]; then
+    echo "Error: --with-app is only supported on macOS arm64."
+    echo "For other platforms, run without --with-app to install the CLI."
+    exit 1
+  fi
+
+  PKG_URL="https://github.com/${GH_REPO}/releases/latest/download/Conflab-arm64.pkg"
+  PKG_FILE="$(mktemp -t Conflab-arm64-XXXXXX.pkg)"
+  trap 'rm -f "$PKG_FILE"' EXIT
+
+  echo "Conflab macOS Installer"
+  echo ""
+  echo "  Source: ${PKG_URL}"
+  echo "  Target: /Applications/Conflab.app (+ CLI, daemon, LaunchAgent)"
+  echo ""
+  echo "==> Downloading installer..."
+  if ! curl -fSL --progress-bar -o "$PKG_FILE" "$PKG_URL"; then
+    echo ""
+    echo "Error: download failed."
+    echo "Check https://github.com/${GH_REPO}/releases for available builds."
+    exit 1
+  fi
+
+  echo "==> Launching installer (you will be prompted for your password)..."
+  open -W "$PKG_FILE"
+
+  echo ""
+  echo "==> Installer closed. Conflab.app should now be in /Applications."
+  echo "    First launch runs a setup wizard to configure your profile + CA trust."
+  exit 0
+fi
+
+# --- CLI-only path (default) ---
 
 TARGET=$(detect_platform)
 DOWNLOAD_URL="https://github.com/${GH_REPO}/releases/latest/download/${BINARY_NAME}-${TARGET}"
@@ -85,6 +149,11 @@ if command -v "$BINARY_NAME" >/dev/null 2>&1; then
   "$BINARY_NAME" --version 2>/dev/null || true
   echo ""
   echo "Run 'conflab --help' to get started."
+  if [ "$(uname -s)" = "Darwin" ]; then
+    echo ""
+    echo "Want the menubar app too? Re-run with --with-app, or see:"
+    echo "  https://conflab.space/download/mac"
+  fi
 else
   echo "Warning: '${BINARY_NAME}' is not on your PATH."
   echo "Add ${INSTALL_DIR} to your PATH, or move the binary:"

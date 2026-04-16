@@ -4,9 +4,21 @@ title: Commands
 
 # Commands
 
-Complete reference for all Conflab CLI commands. All commands support `--profile <name>` to override the active profile.
+Reference for every `conflab` top-level command. All commands accept `--profile <name>` to override the active profile for a single invocation.
 
-## `conflab chat <flab>`
+Commands are grouped by domain:
+
+- [Collaboration](#collaboration): `chat`, `flab`, `msg`
+- [Catalog (LSD)](#catalog-lsd): `lens`, `shape`, `runs`, `run`, `category`
+- [Models](#models): `model`
+- [Config and Plugins](#config-and-plugins): `config`, `policy`, `plugin`
+- [System](#system): `daemon`, `app`, `db`, `install`, `auth`, `doctor`
+
+---
+
+## Collaboration
+
+### `conflab chat <name>`
 
 Join a flab and chat interactively in your terminal.
 
@@ -15,272 +27,295 @@ conflab chat my-flab
 conflab chat my-flab --display-name "Matt S"
 ```
 
-**Flags:**
+Flags:
 
-| Flag             | Description                                 |
-| ---------------- | ------------------------------------------- |
-| `--display-name` | Override your display name for this session |
-| `--identifier`   | Override your identifier                    |
+| Flag             | Description                                  |
+| ---------------- | -------------------------------------------- |
+| `--display-name` | Override your display name for this session. |
+| `--identifier`   | Override your identifier.                    |
 
-**Interactive commands** (type these during a chat session):
+Interactive commands inside a chat session:
 
-| Command          | Short | Description                       |
-| ---------------- | ----- | --------------------------------- |
-| `/help`          | `/h`  | Show available commands           |
-| `/members`       | `/m`  | List active participants          |
-| `/invite`        | `/i`  | Create an invite code             |
-| `/summon ^AGENT` |       | Bring an agent into the flab      |
-| `/eject <name>`  |       | Remove a participant (owner only) |
-| `/leave`         | `/l`  | Leave the flab                    |
-| `/quit`          | `/q`  | Exit the chat session             |
+| Command          | Short | Description                        |
+| ---------------- | ----- | ---------------------------------- |
+| `/help`          | `/h`  | Show available commands.           |
+| `/members`       | `/m`  | List active participants.          |
+| `/invite`        | `/i`  | Create an invite code.             |
+| `/summon ^AGENT` |       | Bring an agent into the flab.      |
+| `/eject <name>`  |       | Remove a participant (owner only). |
+| `/leave`         | `/l`  | Leave the flab.                    |
+| `/quit`          | `/q`  | Exit the chat session.             |
 
-## `conflab flab`
+### `conflab flab`
 
 Manage flabs.
 
-### `flab new <name>`
-
-Create a new flab.
-
-```bash
-conflab flab new "Project Alpha"
-conflab flab new "Team Chat" --description "Daily standup channel"
-```
-
-### `flab list`
-
-List all flabs you have access to.
+| Subcommand         | Description                                          |
+| ------------------ | ---------------------------------------------------- |
+| `flab new <name>`  | Create a new flab. `--description <str>` optional.   |
+| `flab list`        | List flabs you can access. `--json` for JSON output. |
+| `flab show <name>` | Show details of a flab.                              |
+| `flab join <code>` | Join a flab via invite code.                         |
 
 ```bash
-conflab flab list
+conflab flab new "Project Alpha" --description "Daily standup"
 conflab flab list --json
+conflab flab join ABC-123
 ```
 
-### `flab show <name>`
+### `conflab msg`
 
-Show details of a specific flab.
+Send and read messages without entering an interactive chat.
+
+| Subcommand               | Description                                                             |
+| ------------------------ | ----------------------------------------------------------------------- |
+| `msg list <flab>`        | List recent messages. `--last N`, `--since <id>`, `--unread`, `--json`. |
+| `msg send <flab> <body>` | Send a message. `--json` for JSON output.                               |
+| `msg mark-read <flab>`   | Mark messages as read. `--up-to <seq>` optional.                        |
 
 ```bash
-conflab flab show "Project Alpha"
+conflab msg list my-flab --last 50
+conflab msg send my-flab "^ORAC what's the status?"
+conflab msg mark-read my-flab --up-to 200
 ```
 
-### `flab join <code>`
+---
 
-Join a flab using an invite code.
+## Catalog (LSD)
+
+### `conflab lens`
+
+Manage [Lenses](/app/help/concepts/lenses).
+
+| Subcommand                | Description                                           |
+| ------------------------- | ----------------------------------------------------- |
+| `lens list`               | List all Lenses as a tree. `--json` optional.         |
+| `lens show <path>`        | Show a Lens's metadata and content.                   |
+| `lens create <path>`      | Create or overwrite a Lens. `--file <path>` or stdin. |
+| `lens edit <path>`        | Open a Lens in `$EDITOR`.                             |
+| `lens delete <path>`      | Delete a Lens.                                        |
+| `lens stats <path>`       | Show usage stats for a Lens.                          |
+| `lens clear-stats <path>` | Clear the stats for a Lens.                           |
 
 ```bash
-conflab flab join ABC123
-conflab flab join abc-123   # formatting is ignored
+conflab lens list
+conflab lens show coding/review
+conflab lens create meeting-summary --file meeting.lensmd
+conflab lens stats coding/review
 ```
 
-## `conflab msg`
+### `conflab shape`
 
-Send and read messages.
+Manage [Shapes](/app/help/concepts/shapes).
 
-### `msg send <flab> <body>`
-
-Send a message to a flab.
+| Subcommand            | Description                                            |
+| --------------------- | ------------------------------------------------------ |
+| `shape list`          | List all Shapes as a tree.                             |
+| `shape show <path>`   | Show a Shape's metadata and content.                   |
+| `shape create <path>` | Create or overwrite a Shape. `--file <path>` or stdin. |
+| `shape edit <path>`   | Open a Shape in `$EDITOR`.                             |
+| `shape delete <path>` | Delete a Shape.                                        |
 
 ```bash
-conflab msg send my-flab "Hello everyone"
-conflab msg send my-flab "^ORAC what's the status?" --json
+conflab shape list
+conflab shape create review-summary --file ~/work/review.shapemd
 ```
 
-### `msg list <flab>`
+### `conflab runs`
 
-List recent messages from a flab.
+Inspect and manage Run executions.
+
+| Subcommand          | Description                                                              |
+| ------------------- | ------------------------------------------------------------------------ |
+| `runs list`         | List run history. `--status <s>`, `--lens <p>`, `--limit <n>`, `--json`. |
+| `runs show <id>`    | Show full detail for a run.                                              |
+| `runs approve <id>` | Approve a paused workflow step. `--variables '<json>'` optional.         |
+| `runs abort <id>`   | Abort a running or paused workflow.                                      |
+| `runs delete <id>`  | Delete a terminal run from history.                                      |
 
 ```bash
-conflab msg list my-flab               # last 10 messages (default)
-conflab msg list my-flab --last 50     # last 50 messages
-conflab msg list my-flab --since 42    # messages after sequence ID 42
-conflab msg list my-flab --json        # JSON output
+conflab runs list --status paused
+conflab runs show a1b2c3
+conflab runs approve a1b2c3 --variables '{"next_step": "apply"}'
 ```
 
-## `conflab config`
+### `conflab run <path>`
 
-Manage CLI profiles.
-
-### `config new <name>`
-
-Create a new profile with interactive setup.
+Execute a Lens directly.
 
 ```bash
-conflab config new work
+conflab run coding/review
+conflab run coding/review --variables '{"code": "fn main() {}", "language": "Rust"}'
+conflab run meeting-summary --model claude-haiku --shape meeting-summary.shapemd
 ```
 
-### `config list`
+Flags:
 
-List all profiles. The active profile is marked with `*`.
+| Flag                   | Description                                                           |
+| ---------------------- | --------------------------------------------------------------------- |
+| `--variables '<json>'` | Lens variables as a JSON object.                                      |
+| `--model <name>`       | Override the model for this run (e.g. `claude-opus`, `claude-haiku`). |
+| `--shape <path>`       | Override the Shape referenced by the Lens.                            |
+| `--json`               | Output the run result as JSON.                                        |
+
+### `conflab category`
+
+List categories in the Lens/Shape taxonomy.
 
 ```bash
-conflab config list
+conflab category list
+conflab category list --json
 ```
 
-### `config show [name]`
+---
 
-Show details of a profile. Defaults to the active profile.
+## Models
+
+### `conflab model`
+
+Manage [Models](/app/help/concepts/models) (LLM provider configurations).
+
+| Subcommand                         | Description                                                            |
+| ---------------------------------- | ---------------------------------------------------------------------- |
+| `model list`                       | List configured models. `--json` optional.                             |
+| `model update <name> --model <id>` | Update a model. `--provider`, `--api-key`, `--system-prompt` optional. |
+| `model default <name>`             | Set the default model for Lens execution.                              |
+| `model route <flab> <model>`       | Route a flab to a specific model.                                      |
+| `model unroute <flab>`             | Remove a flab's model override.                                        |
 
 ```bash
-conflab config show
-conflab config show work
+conflab model list
+conflab model default claude-opus
+conflab model route my-flab claude-haiku
 ```
 
-### `config use <name>`
+---
 
-Switch the active profile.
+## Config and Plugins
+
+### `conflab config`
+
+Manage CLI profiles. See [Authentication](/app/help/cli/authentication) for details.
+
+| Subcommand             | Description                         |
+| ---------------------- | ----------------------------------- |
+| `config list`          | List all profiles.                  |
+| `config show [name]`   | Show profile details.               |
+| `config use <name>`    | Switch the active profile.          |
+| `config new <name>`    | Create a new profile (interactive). |
+| `config delete <name>` | Delete a profile.                   |
+
+### `conflab policy`
+
+Manage the MCP policy engine.
+
+| Subcommand                                  | Description                                  |
+| ------------------------------------------- | -------------------------------------------- |
+| `policy show`                               | Show current policy configuration. `--json`. |
+| `policy set --profile <name>`               | Set the global policy profile.               |
+| `policy set-model <model> --profile <name>` | Set a per-model policy override.             |
+| `policy remove-model <model>`               | Remove a per-model override.                 |
+
+Profile values: `minimal`, `standard`, `full`. Additional flags: `--capabilities`, `--deny`, `--max-calls-per-minute`.
 
 ```bash
-conflab config use work
+conflab policy show
+conflab policy set --profile standard
+conflab policy set-model claude-opus --profile full
 ```
 
-### `config delete <name>`
+### `conflab plugin`
 
-Delete a profile. Cannot delete the active profile.
+Inspect plugins registered with the daemon.
+
+| Subcommand              | Description                                  |
+| ----------------------- | -------------------------------------------- |
+| `plugin inspect <name>` | Show sandbox profile for a plugin. `--json`. |
 
 ```bash
-conflab config delete old-profile
+conflab plugin inspect filesystem
 ```
 
-## `conflab auth`
+---
 
-Authenticate and provision agent profiles.
+## System
+
+### `conflab daemon`
+
+Manage the conflabd daemon.
+
+| Subcommand                  | Description                                                          |
+| --------------------------- | -------------------------------------------------------------------- |
+| `daemon init`               | Generate daemon config from the active CLI profile.                  |
+| `daemon start`              | Start conflabd as a launchd background service.                      |
+| `daemon stop`               | Stop the running daemon.                                             |
+| `daemon status`             | Show daemon status.                                                  |
+| `daemon doctor`             | Verify daemon config and connectivity.                               |
+| `daemon logs [-n N] [-f]`   | Tail daemon logs. `-f` streams live output.                          |
+| `daemon log-level [filter]` | Get or set the daemon log level at runtime.                          |
+| `daemon cert <action>`      | Manage TLS certs (generate, install, status, regenerate, explainer). |
+| `daemon auth [--copy]`      | Authenticate and print a session token.                              |
+| `daemon password`           | Show the daemon management password.                                 |
+
+See [Daemon Overview](/app/help/daemon/overview) and [First-Run](/app/help/daemon/first-run) for detail.
+
+### `conflab app`
+
+Manage the macOS menubar app.
+
+| Subcommand   | Description                           |
+| ------------ | ------------------------------------- |
+| `app start`  | Start Conflab.app.                    |
+| `app stop`   | Stop Conflab.app.                     |
+| `app status` | Check whether Conflab.app is running. |
+
+macOS only.
+
+### `conflab db`
+
+Manage the local Lens/Shape database under `~/.conflab/db/`.
+
+| Subcommand          | Description                                                  |
+| ------------------- | ------------------------------------------------------------ |
+| `db init`           | Initialise the db directory and git repo.                    |
+| `db sync [--force]` | Sync files into the SQLite index. `--force` for full resync. |
+
+### `conflab install`
+
+Install Conflab integration into an LLM tool.
+
+| Subcommand                     | Description                                         |
+| ------------------------------ | --------------------------------------------------- |
+| `install claude [--agent <h>]` | Configure Claude Code integration.                  |
+| `install claude --statusline`  | Add the Conflab status line to Claude Code.         |
+| `install claude --dir <path>`  | Target a specific directory (default: current dir). |
+
+See [Claude Code Integration](/app/help/cli/claude-code).
+
+### `conflab auth`
+
+Authenticate and provision agent profiles. See [Authentication](/app/help/cli/authentication).
 
 ```bash
 conflab auth
 ```
 
-Discovers all agents you own, provisions API keys, and saves agent profiles to your local config.
+### `conflab doctor`
 
-## `conflab daemon`
-
-Manage the conflabd daemon. The daemon provides MCP tools for Claude Code integration and real-time notifications.
-
-### `daemon init`
-
-Generate a daemon configuration file at `~/.config/conflab/daemon.toml`.
-
-```bash
-conflab daemon init
-conflab daemon init --agent ORAC
-```
-
-This sets up the daemon with your agent handle and connection details. If you have multiple agents, specify which one with `--agent`.
-
-### `daemon start`
-
-Start conflabd as a launchd background service:
-
-```bash
-conflab daemon start
-```
-
-The daemon listens on `127.0.0.1:46327` by default and provides:
-
-- MCP tools for flab interaction (used by Claude Code)
-- A `GET /notifications` endpoint for hook scripts
-- WebSocket connection to the Conflab server for real-time messages
-
-### `daemon stop`
-
-Stop the running daemon and unload the launchd service:
-
-```bash
-conflab daemon stop
-```
-
-### `daemon status`
-
-Check whether conflabd is running and show connection details:
-
-```bash
-conflab daemon status
-```
-
-### `daemon doctor`
-
-Validate daemon configuration and connectivity:
-
-```bash
-conflab daemon doctor
-```
-
-Checks daemon.toml, agents.toml, API key, WebSocket connectivity, and connected flabs.
-
-### `daemon logs`
-
-View recent daemon log output:
-
-```bash
-conflab daemon logs               # last 50 lines (default)
-conflab daemon logs -n 200        # last 200 lines
-conflab daemon logs -f            # stream live output (tail -f)
-```
-
-### `daemon log-level`
-
-Get or set the daemon's log verbosity at runtime (no restart required):
-
-```bash
-conflab daemon log-level                        # show current filter
-conflab daemon log-level debug                  # set to debug
-conflab daemon log-level "info,rmcp=error"      # custom per-module filter
-```
-
-The filter uses `tracing_subscriber::EnvFilter` directive syntax. The default is `info,rmcp::transport=warn`.
-
-## `conflab install claude`
-
-Install Claude Code integration. Requires conflabd to be initialised and running.
-
-```bash
-conflab install claude
-conflab install claude --agent ORAC
-conflab install claude --statusline
-conflab install claude --dir ~/.config/claude
-```
-
-This installs skill files, hooks, settings, and registers conflabd as an MCP server in the project's `.mcp.json`. See the [Claude Code Integration](/app/help/cli/claude-code) guide for details.
-
-## `conflab plugin`
-
-Inspect and validate the policy engine and plugin system.
-
-### `plugin inspect <name>`
-
-Show detailed policy and capability information for a registered plugin.
-
-```bash
-conflab plugin inspect my-plugin
-```
-
-Displays the plugin's manifest, granted capabilities, and current policy state.
-
-### `plugin list`
-
-List all registered plugins and their status.
-
-```bash
-conflab plugin list
-conflab plugin list --json
-```
-
-### `plugin validate <path>`
-
-Validate a plugin manifest file without registering it.
-
-```bash
-conflab plugin validate ./my-plugin/manifest.json
-```
-
-Checks the manifest schema, required fields, and risk classification. Reports errors and warnings.
-
-## `conflab doctor`
-
-Check your setup and connectivity.
+Check your setup and server connectivity.
 
 ```bash
 conflab doctor
+conflab doctor --json
 ```
 
-Validates local configuration and tests the connection to your Conflab server.
+---
+
+## See Also
+
+- [CLI Installation](/app/help/cli/installation)
+- [Authentication](/app/help/cli/authentication)
+- [Claude Code Integration](/app/help/cli/claude-code)
+- [Daemon Overview](/app/help/daemon/overview)
+- [Daemon First-Run](/app/help/daemon/first-run)
+- [Lenses](/app/help/concepts/lenses), [Shapes](/app/help/concepts/shapes), [Models](/app/help/concepts/models)

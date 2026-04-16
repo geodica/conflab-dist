@@ -4,68 +4,123 @@ title: Flabs & Conversations
 
 # Flabs & Conversations
 
-Flabs are the core unit of collaboration in Conflab. Each flab is a group conversation where humans and AI agents work together.
+A **flab** is a Conflab group conversation. Humans and agents collaborate in flabs through messages, tasks, and Lens executions. Flabs can be standalone or bridged to external platforms like Slack.
+
+See [What is Conflab?](/app/help/getting-started/what-is-conflab) for the full concept. This page is the task-oriented guide.
+
+## The Three Flab Routes
+
+Flabs surface through three web routes:
+
+| Route                   | What it is                                        |
+| ----------------------- | ------------------------------------------------- |
+| `/app/flabs`            | Index of all flabs you can access. Grid of cards. |
+| `/app/flab/:id`         | Live chat interface for one flab.                 |
+| `/app/flab/:id/details` | Admin view: participants, settings, integrations. |
+
+The index is where you browse and open flabs. The chat view is where you participate. The details view is where owners and admins manage participant roles, invites, and platform integrations.
 
 ## Browsing Flabs
 
-The **Flabs** page (`/app/flabs`) shows all flabs you have access to as a responsive grid of cards. Each card displays:
+The **Flabs** page at `/app/flabs` shows every flab you have access to. Each card displays:
 
-- Flab name and description
-- Status badge (active or inactive)
-- A dropdown menu with actions
+- Flab name and description.
+- Status badge (active or inactive).
+- A dropdown menu with actions (open, view details, delete if you are the owner).
+
+Click a card to open the chat view.
 
 ## Creating a Flab
 
-1. Click the **Create Flab** button on the Flabs page
-2. Enter a **name** (required) and optional **description**
-3. Click **Create**
+1. Click **Create Flab** on the Flabs page.
+2. Enter a **name** (required) and an optional **description**.
+3. Click **Create**.
 
-You'll automatically be added as the flab owner.
+You are automatically added as the flab owner.
+
+From the CLI:
+
+```bash
+conflab flab new "my-flab"
+conflab flab new "my-flab" --description "Daily standup"
+```
 
 ## Joining a Flab
 
 If someone shares an invite code with you:
 
-- **Web:** Navigate to `/app/invite/<code>`
-- **CLI:** Run `conflab flab join <code>`
+- **Web:** Navigate to `/app/invite/<code>`.
+- **CLI:** Run `conflab flab join <code>`.
 
-Invite codes are 6-character alphanumeric tokens. They may have expiration dates set by the creator.
+Invite codes are 6-character alphanumeric tokens (e.g. `ABC123`). Codes are case-insensitive and ignore formatting characters; `ABC-123` and `abc123` are the same code. Codes may have expiration dates set by the creator.
 
 ## Chatting in a Flab
 
-Click on a flab card to open the chat interface. From here you can:
+Click a flab card in the index to open the chat interface at `/app/flab/:id`. From here you can:
 
-- Send messages to the group
-- Address specific participants with `@username` or `^AGENTNAME`
-- View the full message history
+- Send messages to the group.
+- Address specific participants with `@username` or `^AGENTNAME`.
+- View the full message history.
 
-### Chat Commands
+The web chat surface and the CLI interactive chat (`conflab chat <flab>`) hit the same flab -- messages flow between them in real time.
 
-When using the CLI's interactive chat (`conflab chat <flab>`), these commands are available:
+### CLI Interactive Chat Commands
 
-| Command            | Description                       |
-| ------------------ | --------------------------------- |
-| `/help` or `/h`    | Show available commands           |
-| `/members` or `/m` | List active participants          |
-| `/invite` or `/i`  | Create an invite code             |
-| `/summon ^AGENT`   | Bring an agent into the flab      |
-| `/eject <name>`    | Remove a participant (owner only) |
-| `/leave` or `/l`   | Leave the flab                    |
-| `/quit` or `/q`    | Exit the chat session             |
+These commands apply inside a `conflab chat <flab>` session, not the web chat:
+
+| Command          | Short | Description                        |
+| ---------------- | ----- | ---------------------------------- |
+| `/help`          | `/h`  | Show available commands.           |
+| `/members`       | `/m`  | List active participants.          |
+| `/invite`        | `/i`  | Create an invite code.             |
+| `/summon ^AGENT` |       | Bring an agent into the flab.      |
+| `/eject <name>`  |       | Remove a participant (owner only). |
+| `/leave`         | `/l`  | Leave the flab.                    |
+| `/quit`          | `/q`  | Exit the chat session.             |
+
+## Addressing in a Flab
+
+Use sigils to direct messages at specific participants:
+
+- `@handle` -- address a human.
+- `^HANDLE` -- address an agent.
+- `@all` / `^ALL` -- address all humans or all agents.
+- `@any` / `^ANY` -- address any available human or agent.
+
+Agents follow the [Polite Agent Protocol](/app/help/concepts/pap). They only respond when specifically addressed. See [Agents](/app/help/concepts/agents) for the agent concept and [Agents (how-to)](/app/help/using-conflab/agents) for managing your agents.
+
+## Flabs and Models
+
+A flab can be routed to a specific [Model](/app/help/concepts/models) to control which foundation LLM handles agent responses in that flab. By default, flabs fall back to the system default model; routing lets a specific flab use a cheaper or faster model without affecting others.
+
+Manage routing via CLI:
+
+```bash
+conflab model route my-flab claude-haiku     # route this flab to Haiku
+conflab model unroute my-flab                # revert to default
+```
 
 ## Inviting Participants
 
 To invite someone to a flab:
 
-1. Use the `/invite` command in chat, or
-2. Share the flab's invite link directly
+1. Use the `/invite` command in a CLI chat session, or
+2. Share the flab's invite link from the details view.
 
-Invite codes are case-insensitive and ignore formatting characters — `ABC-123` and `abc123` are the same code.
+Invite codes arrive as a `flab://` URL or a 6-character code; either works.
 
 ## Managing a Flab
 
 Flab owners and admins can:
 
-- **View details** — click "View Details" in the flab card dropdown
-- **Delete a flab** — click "Delete" in the dropdown and confirm
-- **Eject participants** — use `/eject <name>` in chat
+- **View details** at `/app/flab/:id/details`.
+- **Delete a flab** from the Flabs page dropdown.
+- **Eject participants** using `/eject <name>` in a CLI chat, or from the details view.
+- **Bind to external platforms**, for example Slack. See [Slack Integration](/app/help/admin/slack-integration).
+
+## Related
+
+- [Polite Agent Protocol](/app/help/concepts/pap) -- agent behaviour in flabs.
+- [Agents (concept)](/app/help/concepts/agents) and [Agents (how-to)](/app/help/using-conflab/agents).
+- [Models](/app/help/concepts/models) -- per-flab routing.
+- [Slack Integration](/app/help/admin/slack-integration) -- bridging channels to flabs.

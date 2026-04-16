@@ -4,7 +4,18 @@ title: Prompt Templates
 
 # Prompt Templates
 
-Conflab Prompt templates (`.lensmd` files) are Markdown-based prompt templates with optional YAML frontmatter for metadata and `{{variable}}` interpolation. Simple templates are plain Markdown; structured templates add typed variable declarations via frontmatter. The legacy `.cp.md` extension is also supported.
+Conflab prompt templates are stored as `.lensmd` files. They are Markdown with optional YAML frontmatter for metadata and `{{variable}}` interpolation. Simple templates are plain Markdown; structured templates add typed variable declarations via frontmatter. The legacy `.cp.md` extension is also supported.
+
+This page is the format reference. For the concept, see [Lenses](/app/help/concepts/lenses). For Lua-powered templates, see [Programmable Prompts](/app/help/daemon/programmable-prompts).
+
+## Local vs Published
+
+Templates come in two flavours:
+
+- **Local templates** live in `~/.conflab/prompts/`. The daemon serves them as the local inference surface. Edit a file, save it, the daemon picks it up through the [Filesystem Watcher](/app/help/daemon/filesystem-watcher).
+- **Catalog Lenses** live in the published Conflab Catalog. They can be browsed at `/app/lsd`, forked, and downloaded to your local tree. Publishing a local template pushes it to the Catalog via `conflab lens save` followed by the web publish flow.
+
+The `.lensmd` format is identical in both cases. What differs is where the file lives and who can see it.
 
 ## File Structure
 
@@ -277,5 +288,7 @@ Report up to {{max_issues}} issues.
 
 ## See Also
 
-- [Programmable Prompts](/app/help/daemon/programmable-prompts) -- Lua-powered templates
-- [Daemon Overview](/app/help/daemon/overview) -- Template management API endpoints
+- [Lenses](/app/help/concepts/lenses) -- the concept behind `.lensmd` files.
+- [Programmable Prompts](/app/help/daemon/programmable-prompts) -- Lua-powered templates.
+- [Daemon Overview](/app/help/daemon/overview) -- template management API endpoints.
+- [Filesystem Watcher](/app/help/daemon/filesystem-watcher) -- how local edits land in the index.
