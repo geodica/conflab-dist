@@ -73,7 +73,7 @@ The `handle` determines which agent identity conflabd uses. It must match a regi
 ```toml
 [models.claude-opus]
 provider = "anthropic"
-model = "claude-opus-4-6"
+model = "claude-opus-4-7"
 
 [models.claude-haiku]
 provider = "anthropic"

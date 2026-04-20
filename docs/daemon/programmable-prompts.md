@@ -218,6 +218,74 @@ if not ok then
 end
 ```
 
+### Filesystem (Capability: `fs`) (ST0088)
+
+Read files and enumerate globs under the current user's home directory. Both primitives enforce a home-subtree check (canonicalised target must be within `$HOME`) and size caps internally.
+
+| Function     | Signature                    | Return  | Description                                        |
+| ------------ | ---------------------------- | ------- | -------------------------------------------------- |
+| `read_file`  | `bridge.read_file(path)`     | `table` | Read a single file. Supports `~/` tilde expansion. |
+| `list_files` | `bridge.list_files(pattern)` | `table` | Enumerate files matching a glob. Supports `~/`.    |
+
+Both return a table with `ok = true` on success or `ok = false, error = <code>, detail = <string>` on failure.
+
+#### read_file
+
+On success:
+
+```lua
+local r = bridge.read_file("~/Documents/notes.md")
+-- r.ok         == true
+-- r.path       == "/Users/you/Documents/notes.md"
+-- r.name       == "notes.md"
+-- r.content    == "..."
+-- r.size_bytes == 1234
+-- r.mime       == "text/markdown"   -- when inferrable from extension
+```
+
+Error codes: `path_outside_home`, `not_found`, `file_too_large`, `io_error`. Per-file cap defaults to 2 MiB.
+
+#### list_files
+
+On success:
+
+```lua
+local r = bridge.list_files("~/Documents/meetings/*.md")
+-- r.ok      == true
+-- r.entries == { {path=..., name=...}, {path=..., name=...}, ... }
+```
+
+Error codes: `glob_invalid`, `path_outside_home`, `listing_too_large`, `io_error`. Listing cap defaults to 256 entries.
+
+#### Common Pattern: Iterate a `glob` Variable
+
+Pair a `type: glob` variable with `fs` capability for "point the lens at files" flows:
+
+```yaml
+---
+capabilities: [fs]
+variables:
+  transcripts:
+    type: glob
+    required: true
+---
+```
+
+````markdown
+```lua conflab-exec
+local pattern = bridge.get_variable("transcripts")
+local listing = bridge.list_files(pattern)
+if not listing.ok then error("list_files failed: " .. listing.error) end
+
+local parts = {}
+for _, entry in ipairs(listing.entries) do
+  local f = bridge.read_file(entry.path)
+  if f.ok then table.insert(parts, "### " .. entry.name .. "\n\n" .. f.content) end
+end
+bridge.set_variable("transcripts", table.concat(parts, "\n\n---\n\n"))
+```
+````
+
 ### Future Capabilities (Stubs)
 
 These capabilities are declared but not yet implemented. Calling them returns a "not yet implemented" error and adds a warning to the response.
@@ -238,7 +306,7 @@ capabilities:
 ---
 ```
 
-If a template calls a capability-gated function without declaring it, the function is `nil` and Lua raises an error. Known capabilities: `clipboard`, `mcp`, `llm`, `applescript`. Unknown capability names cause a validation error.
+If a template calls a capability-gated function without declaring it, the function is `nil` and Lua raises an error. Known capabilities: `clipboard`, `fs`, `mcp`, `llm`, `applescript`. Unknown capability names cause a validation error.
 
 ## Sandbox Limits
 
@@ -465,7 +533,15 @@ Context from memory:
 Provide a concise summary of the key topics, decisions, and action items.
 ````
 
+## Higher-Level Helpers
+
+The `bridge.*` API documented above is the low-level interface. For common patterns -- glob expansion, required-variable guards, string truncation -- a Conflab-authored stdlib lives on the `conflab.*` global. The 20-line glob/read/concat block in the filesystem example above collapses to a single `conflab.expand_glob("transcripts")` call. See the [Lua Stdlib Reference](/app/help/daemon/lua-stdlib) for the full list.
+
+For helpers you want to share across your own lenses without waiting for the daemon to ship them, drop a `.lua` file into `~/.conflab/db/lua/` and reference it as `user.<stem>.*` from any lens. See the [Lua User Library](/app/help/daemon/lua-user-library) guide for the file-format contract, failure isolation, and capability rules.
+
 ## See Also
 
+- [Lua Stdlib Reference](/app/help/daemon/lua-stdlib) -- Conflab-authored helpers on `conflab.*`
+- [Lua User Library](/app/help/daemon/lua-user-library) -- your own helpers at `user.*`
 - [Prompt Templates](/app/help/daemon/templates) -- `.lensmd` format reference
 - [Daemon Overview](/app/help/daemon/overview) -- Template management API endpoints

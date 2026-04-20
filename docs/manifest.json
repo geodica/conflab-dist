@@ -165,9 +165,24 @@
           "title": "Programmable Prompts"
         },
         {
+          "id": "daemon/lua-stdlib",
+          "file": "daemon/lua-stdlib.md",
+          "title": "Lua Stdlib Reference"
+        },
+        {
+          "id": "daemon/lua-user-library",
+          "file": "daemon/lua-user-library.md",
+          "title": "Lua User Library"
+        },
+        {
           "id": "daemon/filesystem-watcher",
           "file": "daemon/filesystem-watcher.md",
           "title": "Filesystem Watcher"
+        },
+        {
+          "id": "daemon/token-rotation",
+          "file": "daemon/token-rotation.md",
+          "title": "Token Rotation"
         }
       ]
     },

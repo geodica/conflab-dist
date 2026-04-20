@@ -13,7 +13,7 @@ Models are not agents. Models have no personality, no memory between runs, and n
 A model configuration captures:
 
 - **Provider** (`anthropic`, and others as they are added).
-- **Model name** (`claude-opus-4-6`, `claude-haiku-4-5-20251001`, etc).
+- **Model name** (`claude-opus-4-7`, `claude-haiku-4-5-20251001`, etc).
 - **API key** stored in the daemon's secrets store.
 - **Status flags** such as whether the key is valid and whether the model is the default.
 
@@ -22,7 +22,7 @@ Configuration lives in `~/.conflab/models.toml`. Sections are keyed by model nam
 ```toml
 [models.claude-opus]
 provider = "anthropic"
-model = "claude-opus-4-6"
+model = "claude-opus-4-7"
 
 [models.claude-haiku]
 provider = "anthropic"

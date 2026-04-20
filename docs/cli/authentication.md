@@ -108,6 +108,10 @@ conflab daemon auth --copy        # copy the token to your clipboard
 
 The token is valid until the daemon restarts. Use it as a Bearer token on requests to `http://127.0.0.1:46327/...`.
 
+### Rotating the Daemon's Server API Key
+
+The daemon also holds its own API key for talking to the Conflab server, separate from the management password above. Rotate it with `conflab daemon token cycle` (or the **Cycle API Key** button in macOS Settings → Account). The flow uses a browser-confirmed OAuth loopback, so an attacker who has only the current token cannot rotate it. See [Token Rotation](/app/help/daemon/token-rotation) for the full walkthrough.
+
 ### How It Works
 
 - The password is auto-generated on first daemon start (16-char alphanumeric) and stored in `~/.config/conflab/daemon.toml` and the macOS Keychain.
@@ -121,4 +125,5 @@ The token is valid until the daemon restarts. Use it as a Bearer token on reques
 - [Installation](/app/help/cli/installation) -- the end-to-end setup.
 - [Daemon First-Run](/app/help/daemon/first-run) -- macOS menubar trust install.
 - [Daemon Overview](/app/help/daemon/overview) -- daemon auth and configuration.
+- [Token Rotation](/app/help/daemon/token-rotation) -- cycling the daemon's server API key.
 - [Account Settings](/app/help/using-conflab/account) -- generating API keys.

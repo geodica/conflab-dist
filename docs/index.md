@@ -55,6 +55,7 @@ The local runtime. `conflabd` runs on your machine, connects to the server, expo
 - [Prompt Templates](/app/help/daemon/templates): `.lensmd` format reference.
 - [Programmable Prompts](/app/help/daemon/programmable-prompts): Lua-powered templates with the `bridge` API.
 - [Filesystem Watcher](/app/help/daemon/filesystem-watcher): how local edits land in the SQLite index.
+- [Token Rotation](/app/help/daemon/token-rotation): cycle the daemon's API key via browser confirmation.
 
 ## <span class="hero-cog-6-tooth w-6 h-6 inline-block align-text-bottom"></span> Administration
 

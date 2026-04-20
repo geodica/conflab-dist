@@ -249,15 +249,17 @@ Manage the conflabd daemon.
 | `daemon init`               | Generate daemon config from the active CLI profile.                  |
 | `daemon start`              | Start conflabd as a launchd background service.                      |
 | `daemon stop`               | Stop the running daemon.                                             |
+| `daemon restart`            | Stop and restart the daemon (pick up a cycled token).                |
 | `daemon status`             | Show daemon status.                                                  |
 | `daemon doctor`             | Verify daemon config and connectivity.                               |
 | `daemon logs [-n N] [-f]`   | Tail daemon logs. `-f` streams live output.                          |
 | `daemon log-level [filter]` | Get or set the daemon log level at runtime.                          |
 | `daemon cert <action>`      | Manage TLS certs (generate, install, status, regenerate, explainer). |
+| `daemon token cycle`        | Rotate the daemon's API key via browser confirmation.                |
 | `daemon auth [--copy]`      | Authenticate and print a session token.                              |
 | `daemon password`           | Show the daemon management password.                                 |
 
-See [Daemon Overview](/app/help/daemon/overview) and [First-Run](/app/help/daemon/first-run) for detail.
+See [Daemon Overview](/app/help/daemon/overview), [First-Run](/app/help/daemon/first-run), and [Token Rotation](/app/help/daemon/token-rotation) for detail.
 
 ### `conflab app`
 
@@ -318,4 +320,5 @@ conflab doctor --json
 - [Claude Code Integration](/app/help/cli/claude-code)
 - [Daemon Overview](/app/help/daemon/overview)
 - [Daemon First-Run](/app/help/daemon/first-run)
+- [Token Rotation](/app/help/daemon/token-rotation)
 - [Lenses](/app/help/concepts/lenses), [Shapes](/app/help/concepts/shapes), [Models](/app/help/concepts/models)
