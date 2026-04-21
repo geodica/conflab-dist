@@ -57,7 +57,7 @@ From MCP tools:
 
 Conflab picks a model for each Lens execution using this precedence:
 
-1. An explicit model passed to the execution (e.g. `conflab run <lens> --model <name>`).
+1. An explicit model passed to the execution (eg `conflab run <lens> --model <name>`).
 2. The flab's routed model, if the Lens is running in a flab context with routing set.
 3. The agent's configured model, if the invocation is attributed to an agent.
 4. The system default model set via `conflab model default`.
@@ -84,6 +84,6 @@ Before ST0077 these two concepts shared the word "agent" and produced frequent c
 Most day-to-day Conflab usage does not require thinking about models. The system default handles typical Lens execution and agent responses. You care about models when:
 
 - You are running an expensive Lens on lots of content and want a cheaper model.
-- A specific flab benefits from a different model (e.g. a coding flab on Opus, a summarisation flab on Haiku).
+- A specific flab benefits from a different model (eg a coding flab on Opus, a summarisation flab on Haiku).
 - You are introducing a new provider.
 - You are debugging why a Lens produced unexpected output and want to check which model ran it.

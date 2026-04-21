@@ -41,7 +41,7 @@ The alert shows:
 
 The alert closes. The menubar shows **Ready**.
 
-**Re-check** runs `conflab daemon cert status` and re-verifies whether the CA is trusted. Use this after manual intervention (e.g. after you manually trusted the cert via Keychain Access).
+**Re-check** runs `conflab daemon cert status` and re-verifies whether the CA is trusted. Use this after manual intervention (eg after you manually trusted the cert via Keychain Access).
 
 **Dismiss** closes the alert without installing. The menubar shows **Limited**. Certificate warnings persist until you install the CA or configure manual trust.
 

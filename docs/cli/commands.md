@@ -151,12 +151,12 @@ conflab run meeting-summary --model claude-haiku --shape meeting-summary.shapemd
 
 Flags:
 
-| Flag                   | Description                                                           |
-| ---------------------- | --------------------------------------------------------------------- |
-| `--variables '<json>'` | Lens variables as a JSON object.                                      |
-| `--model <name>`       | Override the model for this run (e.g. `claude-opus`, `claude-haiku`). |
-| `--shape <path>`       | Override the Shape referenced by the Lens.                            |
-| `--json`               | Output the run result as JSON.                                        |
+| Flag                   | Description                                                         |
+| ---------------------- | ------------------------------------------------------------------- |
+| `--variables '<json>'` | Lens variables as a JSON object.                                    |
+| `--model <name>`       | Override the model for this run (eg `claude-opus`, `claude-haiku`). |
+| `--shape <path>`       | Override the Shape referenced by the Lens.                          |
+| `--json`               | Output the run result as JSON.                                      |
 
 ### `conflab category`
 

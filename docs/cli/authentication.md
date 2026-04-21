@@ -45,7 +45,7 @@ You cannot delete the currently active profile; switch to another one first.
 
 `conflab config new <name>` opens an interactive setup and prompts for:
 
-1. **Server URL** -- your Conflab instance (e.g. `https://conflab.space`).
+1. **Server URL** -- your Conflab instance (eg `https://conflab.space`).
 2. **API Key** -- generated from [Account Settings](/app/help/using-conflab/account).
 
 The CLI verifies your credentials before saving.

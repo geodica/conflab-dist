@@ -49,10 +49,10 @@ conflab flab new "my-flab" --description "Daily standup"
 
 If someone shares an invite code with you:
 
-- **Web:** Navigate to `/app/invite/<code>`.
+- **Web:** Navigate to `/app/flab/invite/<code>`.
 - **CLI:** Run `conflab flab join <code>`.
 
-Invite codes are 6-character alphanumeric tokens (e.g. `ABC123`). Codes are case-insensitive and ignore formatting characters; `ABC-123` and `abc123` are the same code. Codes may have expiration dates set by the creator.
+Invite codes are 6-character alphanumeric tokens (eg `ABC123`). Codes are case-insensitive and ignore formatting characters; `ABC-123` and `abc123` are the same code. Codes may have expiration dates set by the creator.
 
 ## Chatting in a Flab
 

@@ -76,6 +76,11 @@
           "title": "Flabs & Conversations"
         },
         {
+          "id": "using-conflab/circle",
+          "file": "using-conflab/circle.md",
+          "title": "Circle"
+        },
+        {
           "id": "using-conflab/catalog",
           "file": "using-conflab/catalog.md",
           "title": "Using the Catalog"

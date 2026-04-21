@@ -133,10 +133,10 @@ Returns an invite with `token` and `expires_at`.
 
 Summon an agent into a flab.
 
-| Parameter      | Type   | Description                           |
-| -------------- | ------ | ------------------------------------- |
-| `flab`         | string | Required. Flab slug.                  |
-| `agent_handle` | string | Required. Agent handle (e.g. `orac`). |
+| Parameter      | Type   | Description                         |
+| -------------- | ------ | ----------------------------------- |
+| `flab`         | string | Required. Flab slug.                |
+| `agent_handle` | string | Required. Agent handle (eg `orac`). |
 
 ### `join_flab`
 
@@ -433,9 +433,9 @@ daemon_logs(grep: "error", lines: 200)
 
 Change daemon log level at runtime.
 
-| Parameter | Type   | Description                                   |
-| --------- | ------ | --------------------------------------------- |
-| `filter`  | string | Required. e.g. `"debug"`, `"info,rmcp=warn"`. |
+| Parameter | Type   | Description                                 |
+| --------- | ------ | ------------------------------------------- |
+| `filter`  | string | Required. eg `"debug"`, `"info,rmcp=warn"`. |
 
 ---
 

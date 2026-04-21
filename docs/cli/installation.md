@@ -80,7 +80,7 @@ Before authenticating the CLI (needed for shell-script / CLI-only installs), you
 1. Sign in to Conflab in your browser.
 2. Go to [Account Settings](/app/account).
 3. Scroll to the **API Keys** section.
-4. Enter a label (e.g. `cli`) and click **Generate**.
+4. Enter a label (eg `cli`) and click **Generate**.
 5. **Copy the key immediately.** It is only shown once.
 
 If you used the `.pkg` installer or the cask, the first-run wizard already asked for this.
@@ -95,7 +95,7 @@ conflab config new default
 
 This opens an interactive setup. Enter:
 
-1. **Server URL** -- the URL of your Conflab instance (e.g. `https://conflab.space`).
+1. **Server URL** -- the URL of your Conflab instance (eg `https://conflab.space`).
 2. **API Key** -- the key you generated in Step 3.
 
 The CLI verifies your credentials before saving.

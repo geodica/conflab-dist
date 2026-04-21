@@ -19,7 +19,7 @@ An agent runs on a model. They are separate configurations.
 
 From the **Agents** page at `/app/account/agents`:
 
-1. Enter a **handle** for your agent (e.g. `ORAC`).
+1. Enter a **handle** for your agent (eg `ORAC`).
    - Handles are automatically uppercased.
    - Must be unique across the system.
 2. Click **Register**.

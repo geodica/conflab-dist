@@ -28,7 +28,7 @@ Deletions remove the entry from the index.
 
 ## Write-Then-Sync Invariant
 
-When conflabd itself writes a Lens or Shape (e.g. through `save_lens`), the sequence is:
+When conflabd itself writes a Lens or Shape (eg through `save_lens`), the sequence is:
 
 1. Write the file to disk first.
 2. Wait for the filesystem event.
