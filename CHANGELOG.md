@@ -5,6 +5,105 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-04-22
+
+Patch release. Ships ST0096 (Lens Launcher), ST0091 (daemon Workflow → LensRunner + Run rename), Circle unified with per-row relationship badges, a new Feed tab as the default on `/app/circle`, the Instaflag admin tool, a fix for a latent polymorphic `flag_count` aggregate bug, hardened registration-mode enforcement, and local-dev polish.
+
+### Added
+
+- **Lens Launcher (ST0096)** — Shortcuts-style macOS menubar runner. Two tabs (Favourites + All Lenses), global hotkey `⌥⌘R` via `sindresorhus/KeyboardShortcuts` (no Accessibility permission). Run dispatch via daemon `run` mutation; Run form generated from the Lens variable schema (number min/max, text, CodeMirror multiline, file attachments, booleans); four client-side Swift shape renderers (MeetingSummary, ActionItems, JsonSchemaGeneric, MarkdownFallback); result pane with collapse-to-chips, Run again, View in history.
+- **Launcher destinations** — Copy (NSPasteboard), Save... (sheet-attached NSSavePanel), Flab it! (FlabPickerView sheet + new daemon mgmt-GraphQL `listFlabs` query + `postToFlab` mutation). MCP and mgmt share one `find_flab_by_slug` resolver (Highlander).
+- **Launcher Favourites + pinning** — `LauncherPreferences` over `UserDefaults`; Favourites tab with `.onMove` drag-reorder; Lens-tile pin overlay on hover.
+- **Catalog-first starter pack** — four themes (`starter-working-with-documents`, `starter-working-with-code`, `starter-working-with-products`, `starter-other-useful-lenses-and-shapes`) covering 11 Lenses + 7 Shapes. `conflab lens install / shape install / theme install <slug>` fetches from conflabc GraphQL. `Conflab.Catalog.Bootstrap` extended with a `walk_shapes` pass mirroring `walk_entries`.
+- **Circle unified** — Circle / Following / Followers tabs collapsed into one paginated list on `/app/circle`. Each row carries a Friend / Mutual / Following / Follower badge + matching action. New `Conflab.Social.list_my_people/2` dedupes (Friendship wins) and derives `:mutual`. `UserCard` variant `:circle` renamed to `:friend`; added `:mutual`, `:follower` variants.
+- **Feed tab on `/app/circle`** — new default tab. Newest-first activity across friends + mutuals + outgoing follows. Four event kinds: `:lens_published`, `:lens_reviewed`, `:lens_rated` (★ display), `:lens_liked`. New `:by_authors` read on `Catalog.Entry`, `:by_users` on `Review` / `Rating` / `EntryLike`. `Social.list_feed/2` composes + in-memory paginates at 20 per page. New `ConflabWeb.Components.FeedItem` component. PubSub reload covers Feed alongside Circle on social-graph edge changes.
+- **Instaflag admin tool** — admin-only one-click flag-and-hide for catalog entries. New `:instaflag` action on `Conflab.Catalog.Entry` + `Conflab.Catalog.Entry.Changes.RecordInstaflag`. Admin moderation preview modal at `/app/admin/moderation` opens entries inline.
+
+### Changed
+
+- **Daemon rename: Workflow → LensRunner + Run (ST0091)** — internal subsystem renamed (`workflow/` → `lens_runner/`, `WorkflowManager` → `LensRunner`); public artefact renamed (`WorkflowExecution` → `Run`, `WorkflowStatus` → `RunStatus`); GraphQL `workflows` → `runs`, `approveWorkflow` → `approveRun`. SQL table `workflow_executions` → `runs` under v15 SQLite migration (column-probe-guarded; preserves data). Preserved: `TemplateKind::Workflow` enum variant, `conflab-workflow` Lua block syntax, macOS Automator `.workflow` references.
+- **Launcher toast polish** — Lens-run completion and Flab it! post route through a single bottom-anchored toast overlay on the Run window. Auto-dismiss (2.5s success / 4s failure). Replaces two inline flashes.
+- **Registration-mode enforcement** — `/register` patch-navigation bypass closed via new `ConflabWeb.LiveRegistrationGate` `on_mount` hook. Legacy `registration_enabled` toggle hidden (Registration-mode radio is single source of truth). `:closed` mode blocks minting new invites; previously-minted invites still redeem. New `InviteCreationAllowed` validation on `UserInvite.create_invite`.
+- **Async LV mounts** — `FlabsLive` and `CatalogLive` mount async; daemon-connected state no longer flashes unreachable card on LV navigation (tri-state bridge status + sessionStorage cache + eager verify at +100ms).
+
+### Fixed
+
+- **Polymorphic `flag_count` aggregate** — `has_many :flags` on `Conflab.Catalog.Entry` and `Conflab.Catalog.Review` had `no_attributes? true`, disabling the automatic polymorphic join; every row reported the global flag count. Replaced with `filter expr(flaggable_type == :entry)` (and `:review`) on the relationship. Regression coverage at `test/conflab/catalog/polymorphic_flag_count_test.exs`.
+- **Clippy `new_without_default`** on `LensRunner` — added a `Default` impl.
+
+### Security
+
+- **`/register` patch-navigation bypass closed** — LV-level `on_mount` hook catches patch navigation when `live_action == :register` and `registration_mode != :open`, matching the plug-level gate at the HTTP boundary.
+- **`:closed` mode blocks invite minting** — `InviteCreationAllowed` validation on `UserInvite.create_invite` enforces at the domain layer.
+
+## [0.3.0] - 2026-04-21
+
+Headline release introducing ST0093 — Invite system + Circle + Follow: a first-class social graph for Conflab.
+
+### Added
+
+- **Circle + Invites (ST0093)** — new `/app/circle` page with four tabs (Circle / Following / Discover / Pending). Mint invite codes, share as links or hand-around six-character codes, accept by URL or paste into the inline form. `GET /invite/:token` dispatches unauthenticated visitors to sign-up-and-accept, signed-in visitors to an Accept / Decline card.
+- **Email an invite** — envelope button on each pending invite card opens a modal; sends a Swoosh email with formatted code + direct URL + expiry.
+- **Dashboard surfacing** — "Needs Your Attention" card on `/app` when there are outstanding invites you've minted; top banner when a pending-invite token is carried in session.
+- **Admin `/app/admin/invites` page** — status-filtered list of every UserInvite across all users with Revoke action on pending rows.
+- **Invited-by on `/app/admin/users`** — icon next to each user's email reveals inviter on hover; click activates a filter pill.
+- **Admin Settings → Invites** — three runtime-configurable controls via `Conflab.RuntimeConfig`: `registration_mode` (ternary `open | invite_only | closed`), `invite.expiry_days`, `rate_limit.invite`. Edits take effect within 5 seconds without a daemon restart.
+- **GraphQL** — `Conflab.Social` registered with `AshGraphql.Domain`. Queries: `userInviteByToken`, `myPendingInvites`, `myFriends`, `myFollowing`, `myFollowers`. Mutations: `createUserInvite`, `cancelUserInvite`, `acceptUserInvite`, `followUser`, `unfollowUser`, `unfriend`, `refriend`. `acceptUserInvite` runs the full three-step pipeline so external callers cannot skip friendship creation.
+- **CLI** — `conflab invite {create,list,accept}`. `accept` normalises input client-side.
+
+### Changed
+
+- **FlabInvite route moved** — `/app/invite/:token` → `/app/flab/invite/:token`. The new `/invite/*` and `/app/circle/invite/*` namespaces are reserved for user-level invites.
+- **Default `discoverable` is now `false`** — new users opt in to Discover-tab visibility explicitly. Existing rows untouched.
+- **`registration_mode` replaces `registration_enabled`** — legacy key honoured for one release; removed in v0.3.1.
+
+### Removed
+
+- Inline token alphabet + generator from `Conflab.Collaboration.FlabInvite.Changes.SetupInvite`. The module now delegates to `Conflab.Social.InviteToken` (one copy of the rules).
+
+### Security
+
+- **Invite tokens are the capability** for invite acceptance and registration. Token lookup uses `authorize?: false` by design; the `UserInvite` resource's read policy still requires inviter or admin role for general listing.
+- **Own-invite acceptance rejected at the domain layer** (`Conflab.Social.InviteAcceptance`) — uniform across controller, LiveView, inline form, CLI, GraphQL.
+- **Registration via invite bypasses the admin `registration_mode` gate**; the non-invite path still runs `RegistrationAllowed`.
+- **Admin-only `list_all` policy** on `UserInvite` gates the admin page at the data layer.
+
+## [0.2.1] - 2026-04-20
+
+Patch release bundling five steel threads on top of v0.2.0.
+
+### Added
+
+- **Daemon API key rotation (ST0087)** — `conflab daemon token cycle` (CLI) and Cycle API Key button on the Manage Conflab window's Auth tab. OAuth loopback flow; session-gated against daemon.toml-read attackers.
+- **`conflab daemon restart`** — new top-level verb (stop + start).
+- **Glob variable type for lens runs (ST0088)** — lenses can declare `type: glob` variables holding a path or glob pattern under `$HOME`. Paired with the new `fs` capability, Lua `conflab-exec` PREPARE blocks iterate matches via `bridge.list_files` and load content via `bridge.read_file`. Native folder picker via new daemon `pickPath` GraphQL mutation. Safety: home-dir confined, 2 MiB per-file cap, 256-entry listing cap.
+- **Conflab Lua stdlib + user library (ST0089)** — `conflab.expand_glob`, `conflab.each_file`, `conflab.require_var`, `conflab.truncate`, `conflab.log_table` ship inside the daemon. User helpers at `~/.conflab/db/lua/*.lua` auto-load into the `user.*` namespace, failure-isolated per file.
+- **Unified Manage Conflab window (ST0090)** — macOS menubar's Status + Settings split merged into one six-tab window (General / Flabs / Models / Auth / Trust / About). NSStackView + Auto Layout throughout.
+- **Models configuration UI + CLI (ST0086)** — Models tab edits `models.toml` directly via Add / Edit / Remove. Six new `conflab daemon model` verbs (`list`, `add`, `rm`, `set`, `route`, `policy`).
+- **Admin runtime tuning** — `Conflab.Admin.RateLimiter.limit_for/1` and `Conflab.Lsd.flag_threshold/1` read from `Conflab.RuntimeConfig` with 5s cache. Admin Settings edits take effect without daemon restart.
+
+### Changed
+
+- **`models.toml` schema (ST0086)** — API keys move to `[providers.<name>]` sections. Daemon migrates existing configs automatically on first load.
+- **Cycle flow follows the active CLI profile** — `conflab daemon token cycle` and the menubar Cycle button target the active profile's server, not `daemon.toml`. New token written back alongside the new server URL.
+- **Admin GraphQL Bearer-authed from macOS app** — fixes the Models tab silently failing with "Invalid or expired API key".
+
+### Removed
+
+- **Workflows and Plugins tabs (macOS only)** — redundant (Workflows duplicated the web Runs panel; Plugins had none installed). Daemon-side lens execution and the plugin subsystem remain intact.
+
+### Fixed
+
+- Cycle flow auto-registers the current machine on first use (was: hard-fail with "No matching host key").
+- Manage window polish: Models-tab keychain access, schema reload, selection flicker, tab-bar overlap, default window size.
+- Auth tab inline cycle URL with copy-to-clipboard icon.
+- Run abort handles pending-* IDs correctly; model selector via `phx-change`; Opus 4.7 is the new default.
+- Daemon `pickPath` GraphQL result matches before the generic catch-all.
+
+### Security
+
+- **Daemon API key rotation is session-gated (ST0087)** — rotating the key requires an authenticated account session in the browser, not just the current bearer.
+
 ## [0.2.0] - 2026-04-15
 
 First minor release. Ships the public Lens/Shape/Prompt Directory, a curated launch catalog, public unauthenticated browse, Atom feeds, full daemon API coverage on CLI and MCP, Admin 2.0, Dashboard 2.0, UGC moderation, macOS first-run CA trust UX, a signed and notarised macOS installer with first-run wizard, the AGENT→MODEL terminology rename, and a complete documentation refresh.
@@ -237,6 +336,9 @@ Initial release of the conflab CLI and conflabd daemon.
 - `daemon_logs` MCP tool for reading daemon logs from within agent sessions.
 - launchd service management (`conflab daemon start`).
 
+[0.3.1]: https://github.com/geodica/conflab-dist/releases/tag/v0.3.1
+[0.3.0]: https://github.com/geodica/conflab-dist/releases/tag/v0.3.0
+[0.2.1]: https://github.com/geodica/conflab-dist/releases/tag/v0.2.1
 [0.2.0]: https://github.com/geodica/conflab-dist/releases/tag/v0.2.0
 [0.1.8]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.8
 [0.1.7]: https://github.com/geodica/conflab-dist/releases/tag/v0.1.7
