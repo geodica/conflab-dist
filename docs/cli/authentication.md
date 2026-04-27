@@ -115,9 +115,10 @@ The daemon also holds its own API key for talking to the Conflab server, separat
 ### How It Works
 
 - The password is auto-generated on first daemon start (16-char alphanumeric) and stored in `~/.config/conflab/daemon.toml` and the macOS Keychain.
-- Session tokens are opaque 64-char hex strings valid until daemon restart.
+- Session tokens are opaque 64-char hex strings, persisted in the daemon's state DB and restored on boot so they survive `conflab daemon restart`.
 - Browser tokens live in `sessionStorage` (persist across navigation, cleared on tab close).
-- MCP clients (Claude Code, etc.) authenticate automatically via a boot token at `~/.config/conflab/mgmt_token`.
+- MCP clients (Claude Code, etc.) authenticate via OAuth PKCE (RFC 7636); the bearer they obtain is persisted the same way, so no re-auth on daemon restart.
+- The `conflab` CLI reads `[management].password` from `daemon.toml` and POSTs to `/auth` to mint a fresh bearer per run.
 - CORS is locked to `conflab.space` and localhost dev origins.
 
 ## Related

@@ -107,9 +107,9 @@ conflab daemon auth --copy        # Copy the token to your clipboard
 ### How it works
 
 - Passwords auto-generate on first daemon start (16-char alphanumeric).
-- Session tokens are opaque 64-char hex strings valid until daemon restart.
+- Session tokens are opaque 64-char hex strings, persisted in the daemon's state DB and restored on boot so they survive `conflab daemon restart`.
 - Browser tokens live in `sessionStorage` (persist across navigation, cleared on tab close).
-- MCP clients (Claude Code) authenticate automatically via a boot token at `~/.config/conflab/mgmt_token`.
+- MCP clients (Claude Code) authenticate via OAuth PKCE (RFC 7636); the bearer they obtain is persisted the same way.
 - CORS is locked to `conflab.space` and localhost dev origins.
 
 See [CLI Authentication](/app/help/cli/authentication) for the task-oriented walk-through.

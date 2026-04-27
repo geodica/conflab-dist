@@ -5,6 +5,36 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-04-27
+
+Patch release. Headline is **Flab Errands end-to-end** (ST0094 PAP-competent agent + ST0101 deterministic tool-calling spine emitting `errand_status` rows around every tool call). Also ships **Stable daemon auth across restart** (ST0100 -- persisted bearers; `conflab daemon restart` no longer kicks Claude Code or the web app off), **Notifications domain** (ST0103), **Lenses on Circle** (ST0095), **Daemon API-key UX rework** (ST0102), **Paginator Highlander cleanup** (ST0104), and **ST0105/WP-01..03 daemon agent-auth model rewire** -- `daemon.toml [daemon] handle` is now load-bearing; daemon refuses to boot if `api_key` doesn't resolve to `agent+<handle>@<domain>`. Plus the `:lens_shared` email follow-up, a bell-row avatar fix, and a plugin test reliability fix.
+
+### Added
+
+- **Flab Errands end-to-end (ST0094 + ST0101)** -- summoned in-flab agent is PAP-scaffolded (system-prompt rule recap, Available Lenses surface via new `availableLensesForActor` admin GraphQL, Errand response scaffolding), calls `run_lens` (and other MCP tools) from its own iterative reasoning loop (bounded: 10 tool calls / 120s deadline), and emits deterministic `errand_status` messages (announce -> working -> complete/failed) around every tool call. Provider trait + Claude tool-use wiring formats `tools` request blocks and parses `tool_use` + `text` content blocks. New `ConflabWeb.Components.ErrandStatus` renders the rows in the Flab message stream; `Message.send_message` accepts an `:event` payload. Server-side emission with LLM-supplied rationale (the assistant-message prose preceding the tool call). PAP Rule 4 (`:awaiting` gate) and Ollama tool-use deferred to follow-on STs.
+- **Stable daemon auth across restart (ST0100)** -- new `issued_bearers` SQLite table persists every bearer issued (auth_handler, oauth_token, /authorize?redirect=); daemon rehydrates `active_tokens` on boot. Bearer validation logic unchanged. CLI migrated from `~/.config/conflab/mgmt_token` boot-file exhaust to `/auth + [management].password -> bearer`. New `rotateBearers` mutation + `conflab daemon rotate-bearers` CLI. `[management] bearer_ttl_seconds` in `daemon.toml` makes TTL config-driven (absent = infinite, dev default). `~/.conflab/bridge.secret` confirmed as legitimate daemon-to-menubar IPC (Lua AppleScript dispatch + OS file/folder picker).
+- **Notifications domain (ST0103)** -- new `Conflab.Notifications` Ash domain with `Notification` resource (polymorphic subject_type/subject_id, `:kind` enum, open `:map` payload, `read_at :utc_datetime_usec` nullable). Per-recipient PubSub on `"notifications:user:#{recipient_id}"`. Actions: `list_inbox`, `unread_count` aggregate, `mark_read`, `mark_all_read` (atomic). Per-kind helpers (`notify_lens_shared/3` first) are the only consumer entry points; bare `:create` not exposed. Bell icon in `/app` layout header with live-updating unread badge; `/app/notifications` LiveView with stream-based inbox, kind-specific row renderer, click-to-subject, "Mark all read".
+- **Lenses on Circle (ST0095)** -- LSD Circle tab on `/app/lsd` listing catalog entries imported by active Friendships ("N friends imported" + avatar strip; backed by `:by_friendship_imports` read on `Catalog.UserLibraryEntry`); Share-in-Circle modal on Lens publish (multi-select friend picker, dispatches `notify_lens_shared` + optional email + 20/day rate limit); fifth `:lens_imported` Feed event kind on `/app/circle` (extends `Social.list_circle_feed/1` with a `UserLibraryEntry` aggregator branch). `:lens_shared` email follow-up landed alongside.
+- **Daemon API-key UX rework (ST0102)** -- "Cycle API Key" relocated from `AuthPanelView` (per-profile detail pane) to `DaemonPanelView` (alongside Restart / View Logs). Three alerts (confirm, success, failure) rewritten in plain language explaining the active-CLI-profile -> daemon.toml -> running-daemon flow. Success alert defaults to "Restart Daemon".
+- **Paginator Highlander cleanup (ST0104)** -- `/app/lsd` Browse / Themes / Library tabs now use `ConflabWeb.Components.Paginator` (5-page sliding window, First / Prev / numbered / Next / Last + Go form). Legacy `ConflabWeb.Components.CatalogComponents.pagination/1` deleted.
+
+### Changed
+
+- **Daemon agent-auth model rewired (ST0105/WP-01..03)** -- `daemon.toml [daemon] handle` is now load-bearing. Daemon refuses to boot unless `[server].api_key` resolves to a user whose email's local-part is `agent+<handle>` (case-insensitive; domain trusted from conflabc). New `conflabd::identity` helpers (`expected_agent_local_part/1`, `email_local_part_lower/1`, `validate_handle_identity/2`) + `BootError::HandleIdentityMismatch`. New `Conflab.Accounts.cycle_or_register_agent_key_for_owner/3` code interface replaces deleted `cycle_or_register_host_token_for_user/2`; both `conflab daemon init` (CLI) and `CycleDaemonTokenLive` (web) now mint via `Conflab.Accounts.AgentOwnership.Actions.ProvisionCliKey` so the new api_key's `user_id == agent.id`, not the owner's. Cycle URL gains required `handle=<H>` param. New "Daemon identity" check in `conflab daemon doctor` between "API key" and "WebSocket" surfaces identity mismatches FIRST. WP-04 (sandbox-escape audit) and WP-05 (generator-user cleanup) deferred to v0.4.0+.
+- **Plugin test reliability** -- `plugin::process::tests::process_exit_detected_as_crash` timeout 2s -> 5s. The 2s init+handshake budget was too tight under heavy parallel `cargo test` load.
+
+### Fixed
+
+- Bell-row avatar regression when actor's avatar URL is `nil` (falls back to initials placeholder).
+- `plugin::process::tests::process_exit_detected_as_crash` flake under parallel test load (timeout 2s -> 5s).
+- The "no flabs connected" symptom that previously masked the daemon agent-auth hijack class is now surfaced as a clear identity-mismatch diagnostic at boot and at doctor (see ST0105/WP-01..03 above).
+
+### Security
+
+- **Daemon refuses to boot on agent-identity mismatch (ST0105/WP-01)** -- closes the hijack class where a leaked human-user api_key (`user_2@example.com` from a 2026-04-17 test sandbox-escape) was persistently re-minted into `daemon.toml` by Cycle flows that read the LV-session principal instead of the declared handle.
+- **Cycle API Key mints for the agent, ownership-verified (ST0105/WP-02)** -- `CycleDaemonTokenLive` resolves `handle` to an agent user, requires the LV-session human to own that agent via `Conflab.Accounts.AgentOwnership`, and provisions a key whose `user_id == agent.id`.
+- **Persisted bearers + canonical revocation (ST0100)** -- `issued_bearers` rows survive restart; `rotateBearers` mutation is the single revocation entry point.
+
 ## [0.3.1] - 2026-04-22
 
 Patch release. Ships ST0096 (Lens Launcher), ST0091 (daemon Workflow → LensRunner + Run rename), Circle unified with per-row relationship badges, a new Feed tab as the default on `/app/circle`, the Instaflag admin tool, a fix for a latent polymorphic `flag_count` aggregate bug, hardened registration-mode enforcement, and local-dev polish.
@@ -336,6 +366,7 @@ Initial release of the conflab CLI and conflabd daemon.
 - `daemon_logs` MCP tool for reading daemon logs from within agent sessions.
 - launchd service management (`conflab daemon start`).
 
+[0.3.2]: https://github.com/geodica/conflab-dist/releases/tag/v0.3.2
 [0.3.1]: https://github.com/geodica/conflab-dist/releases/tag/v0.3.1
 [0.3.0]: https://github.com/geodica/conflab-dist/releases/tag/v0.3.0
 [0.2.1]: https://github.com/geodica/conflab-dist/releases/tag/v0.2.1
