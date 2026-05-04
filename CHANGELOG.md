@@ -5,6 +5,35 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-05-04
+
+Minor release on top of v0.3.5. Headline is **schema-enforced shapes via Anthropic tool-use plus a multi-turn agent loop (ST0106)** and **a named-tool registry (ST0107)**: structured lens output now goes through the model's `produce_output` tool call, validated against the lens's shape and rendered through the shape's body template -- ending the long-standing system_prompt-vs-shape conflict where shape rules competed with structural directives in free-text prose. The daemon drives a real Anthropic agent loop: every turn dispatches `tool_choice: auto`, daemon-side tools fire as the model requests them, and the loop terminates on `end_turn` (with hard caps on iterations and input tokens, and three-level overrides per lens). Lenses can declare server-tools by symbolic slug (`tools: [web-fetch]`), with the daemon resolving slugs to the Anthropic API tool spec at runtime via a new file-backed registry (`~/.conflab/db/tools/<slug>.tool.json`). Plus an XSS hardening sweep across the web + macOS surfaces, a Daemon-panel regrouping into Status / Process / Network / Auth / Logging, and critic-rust + critic-elixir cleanup batches.
+
+### Added
+
+- **ST0106 -- Schema-enforced shapes via Anthropic tool-use (WP-01..07).** `Provider::send_message` accepts `tool_choice` + `ToolDef` array (WP-01); `Shape::to_tool_def()` compiles `.shape.json` directly into the Anthropic tool spec (WP-02); `mgmt/helpers` branch enforceable vs synth-prompt paths (WP-03); `.shapemd` placeholders implicitly lifted to JSON-schema-required-fields (WP-04); two-pass `render_shape` walks the shape body with placeholders substituted from the model's call (WP-05); four mfs lenses migrated, system_prompt structural rules stripped, code-fence-echo defect resolved as a side effect (WP-06); compact-format renderer with `{{#var=value}}...{{/var}}` conditional sections (WP-07).
+- **ST0106 -- Multi-turn agent loop (WP-08).** Replaces the v1 single-turn forced-tool-use path with a real Anthropic agent loop. Three locked decisions: `tool_choice: auto` every turn (model opts in); loud `EnforceableShapeNotProduced` failure when `end_turn` arrives without a valid `produce_output`; two hard caps (`max_iterations = 10`, `max_input_tokens = 100_000`) with three-level override (compiled <- daemon.toml <- per-lens frontmatter). SQLite migration v19 adds `agent_loop_trace TEXT` to `runs`; surfaced over GraphQL. Highlander cutover mid-WP: GraphQL `MutationRoot::run`, MCP `run_lens`, and the agent `McpToolDispatcher` thin-wrap a single canonical helper `mgmt::dispatch_lens_run`.
+- **ST0106 -- Convention doc + lens output protocol (WP-09).** `intent/docs/conventions/lens-output-protocol.md` codifies the canonical "Output protocol" stanza for any enforceable lens. Three matts/* lenses migrated; `reading-list-entry` got `tools: [web-fetch]`. Sonnet smoke confirmed the canonical 3-turn loop `web_fetch -> produce_output -> end_turn` end-to-end against a real Anthropic-hosted server-tool.
+- **ST0106 -- Integration tests against fake provider (WP-10).** Six scripted-fixture scenarios at `native/daemon/tests/agent_loop_integration.rs` proving the agent loop integrates correctly through both `mgmt::dispatch_lens_run` and the GraphQL `run` mutation against scripted `FakeProvider` sequences. Cross-surface parity scenario covers MCP `run_lens` by transitivity.
+- **ST0107 -- Named-tool registry (WP-01..12).** `~/.conflab/db/tools/<slug>.tool.json` is a new file type joining lenses and shapes; lenses, daemon config, and agent reasoning loops reference tools by symbolic slug. Compile-time slug constants + startup validator make typos fail fast. Lenses can declare `tools: [web-search]` or `tools: [web-fetch]` in frontmatter.
+- **XSS hardening sweep (web + macOS).** Web-side default escaping for any LLM/lens/shape content; LLM responses render via CodeMirror raw text on both surfaces (Phoenix `phx-hook="SourcePreview"`, macOS `ReadOnlyCodeMirror`); macOS `MarkdownFallback` routes through CodeMirror for strict parity. Hostile-by-default rendering everywhere.
+- **Daemon panel regrouping (macOS Manage).** The Daemon tab regroups its rows into five labelled sections: Status / Process / Network / Auth / Logging.
+
+### Fixed
+
+- **Loud failure on unresolved shape references.** Shape resolution surfaces `ShapeNotFound` instead of silently degrading to free-text output.
+- **Extensionless shape_id resolution.** `resolve_shape` handles LSD shape pickers' extensionless references by trying `.shape.json` then `.shapemd`. `.shape.json` wins on collision.
+- **JSON-typed LLM responses render via CodeMirror.** With JSON syntax highlighting.
+- **Shape detail body via CodeMirror.** Plus `json_schema` literal corrected.
+- **SHAPE chip layout.** Truncates cleanly in the lens editor; chip badge no longer overlaps the description.
+
+### Changed
+
+- **Critic-rust cleanup (5 commits).** Highlander + serde-collapse + lock-poison handling; silent-failure cleanup on DB columns / PID file / warn dedup; thiserror enum sweep on shape + tool parsers; thin-coordinator extraction of `run_workflow_path` + `run_simple_path`; minor cleanup.
+- **Critic-elixir cleanup (7 commits).** Ash domain-interface routing across 7 sites; admin overview moved to `Conflab.Admin.Stats`; `cycle_daemon_token_live` uses Accounts interfaces; analytics actor-on-query; `lua_sandbox.safe_inspect` logs failure; `public_catalog_live` via Catalog domain interface; v2.11.3 critic findings cleared.
+- **Style sweeps.** `eg` enforced over `e.g.` across the tree; manually-wrapped `.md` files unwrapped via `prettier --prose-wrap never`.
+- **Dep bumps.** Oban 2.22.1; ash_phoenix 2.3.21->22, bandit 1.10.4->1.11.0, phoenix_live_view 1.1.28->29, req_llm 1.10->1.11, server_sent_events 0.2.1->1.0.0, spark 2.6.1->2.7.0.
+
 ## [0.3.5] - 2026-04-30
 
 Patch release on top of v0.3.4. Headline is **daemon log lifecycle and shape-composition fixes**: the daemon now writes daily-rolling log files with retention (default 14 days), exposes a `clearLogs` GraphQL mutation, and the macOS Daemon panel gains a **Clear Logs...** button with two-step confirmation. Two regressions surfaced during personal-lens curation are fixed: `execute_prompt_template` now correctly composes lens body + shape (the shape was silently dropped whenever the body was non-empty), and a periodic 60-second full-resync backstops macOS FSEvents to recover from the kernel's coalescing of new-subdir events. The web Lens runner's file-upload pipeline gains a Highlander on file-upload variable types so `texteditor+files` variables now correctly wire their (+) attach control. Plus design-only commits for **ST0106 (schema-enforced shapes via tool-use)** and **ST0107 (named-tool registry)**.
