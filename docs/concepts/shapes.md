@@ -104,6 +104,12 @@ Skip a Shape when:
 - The Lens output varies by design.
 - The task is a one-off.
 
+## Enforcement via produce_output
+
+When a Lens declares a Shape, the daemon synthesises a `produce_output` tool from the Shape's schema and threads it into every model call the Lens makes. The model's `produce_output` arguments are validated against the schema and rendered through the Shape's body to produce the run's final output. Markdown Shapes (`.shapemd`) are implicitly lifted to a JSON schema with required-string fields, then rendered through the Markdown body once the model returns valid arguments. JSON Schema Shapes (`.shape.json`) are used as-is; the daemon pretty-prints the validated JSON as the run output.
+
+Lens authors need to tell the model to call `produce_output` -- the model is never forced. See [Output Protocol](/app/help/daemon/output-protocol) for the canonical author pattern.
+
 ## Relationship to Lenses
 
 Shapes are reusable across Lenses. A single Shape like `review-summary.shapemd` can be used by a Code Review Lens, a Design Review Lens, and a PR Review Lens. Keeping Shapes separate lets multiple Lenses agree on the same output contract.

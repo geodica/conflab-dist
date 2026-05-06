@@ -123,6 +123,11 @@
           "title": "Installation"
         },
         {
+          "id": "cli/uninstallation",
+          "file": "cli/uninstallation.md",
+          "title": "Uninstallation"
+        },
+        {
           "id": "cli/authentication",
           "file": "cli/authentication.md",
           "title": "Authentication"
@@ -170,6 +175,16 @@
           "title": "Programmable Prompts"
         },
         {
+          "id": "daemon/named-tools",
+          "file": "daemon/named-tools.md",
+          "title": "Named Tools"
+        },
+        {
+          "id": "daemon/output-protocol",
+          "file": "daemon/output-protocol.md",
+          "title": "Output Protocol"
+        },
+        {
           "id": "daemon/lua-stdlib",
           "file": "daemon/lua-stdlib.md",
           "title": "Lua Stdlib Reference"
@@ -188,6 +203,11 @@
           "id": "daemon/token-rotation",
           "file": "daemon/token-rotation.md",
           "title": "Token Rotation"
+        },
+        {
+          "id": "daemon/pristine",
+          "file": "daemon/pristine.md",
+          "title": "Pristine"
         }
       ]
     },

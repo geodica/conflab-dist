@@ -201,6 +201,8 @@ conflab uninstall --nuke-data  # Also remove ~/.conflab and app caches/preferenc
 
 If you installed via the cask, `brew uninstall --cask conflab` is the right path (it will tell you).
 
+For per-noun bulk removal (eg "remove the bundled lens set, keep the app"), per-slug surgical removal, factory-reset (`conflab pristine`), and recovery from backups, see the full [Uninstallation](/app/help/cli/uninstallation) guide.
+
 ## Troubleshooting
 
 | Issue                         | Solution                                                                                    |

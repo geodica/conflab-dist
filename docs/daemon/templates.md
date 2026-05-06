@@ -48,6 +48,7 @@ All fields are optional. Unknown keys are ignored.
 | `tags`         | array of strings | `[]`    | Categorisation tags                              |
 | `runtime`      | string (enum)    | `auto`  | Execution environment: `local`, `server`, `auto` |
 | `capabilities` | array of strings | `[]`    | Required runtime capabilities (see below)        |
+| `shape`        | string           | --      | Output structure hint (see Shape Field below)    |
 | `variables`    | map              | `{}`    | Variable declarations (see Variable Types)       |
 
 ### Title Derivation
@@ -80,6 +81,22 @@ Capabilities declare what runtime features a template requires.
 | `applescript` | Stub        | macOS GUI automation via AppleScript |
 
 Templates with no `capabilities` declared produce text output only.
+
+### Shape Field
+
+The `shape:` field carries an output-structure hint. It has two distinct semantics depending on the value:
+
+| Semantics               | Slug shape                                                                 | What it does                                                                                                                                              |
+| ----------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Renderer hint**       | Hardcoded slug recognised by the macOS Launcher (eg `meeting_summary`)     | Dispatches the lens output to a dedicated SwiftUI renderer. The slug does not resolve against any `.shapemd` / `.shape.json` file.                        |
+| **Shape registry slug** | Filesystem slug under `~/.conflab/db/shapes/` (eg `meeting-summary-shape`) | Resolves to a real Shape file (template or JSON Schema). Drives `produce_output` enforcement at the LLM seam (see [Output Protocol](output-protocol.md)). |
+
+The two are kept distinct by convention: renderer-hint slugs use snake_case (`meeting_summary`, `action_items`, `json_schema_generic`); shape-registry slugs use kebab-case and live under `~/.conflab/db/shapes/<theme-slug>/<slug>.shapemd`. Authors picking a `shape:` value should know which kind they want:
+
+- If you want the macOS Launcher to render output in a specific structured card (and you are willing to author the matching renderer in Swift), use a renderer-hint slug. The lens's `system_prompt` carries the structural rules; the renderer parses the resulting markdown.
+- If you want the LLM to call `produce_output` against a real schema or template, use a shape-registry slug that resolves to a `.shapemd` or `.shape.json` file. The daemon enforces structure at the LLM seam regardless of which surface renders it.
+
+The renderer-hint dispatch is in `native/macos/Conflab/Conflab/Views/Launcher/ShapeRenderers/ShapeDispatch.swift`. Adding a new renderer-hint slug requires both a Swift renderer and an entry in that switch; adding a new shape-registry slug requires only a `.shapemd` / `.shape.json` file under `~/.conflab/db/shapes/`.
 
 ## Variable Types
 

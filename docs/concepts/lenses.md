@@ -87,6 +87,12 @@ A Lens can declare a Shape, which is the output contract. If the Lens produces J
 
 Lenses without a Shape produce free-form text output. Most Lenses do not need a Shape; add one when the output will be consumed by something other than a human.
 
+When a Lens declares a Shape it becomes **enforceable**: the daemon synthesises a `produce_output` tool from the Shape's schema and asks the model to call it. The model's arguments are validated against the schema and rendered through the Shape's body. Enforceable Lenses need an Output protocol stanza in their `system_prompt` so the model knows to call `produce_output`; see [Output Protocol](/app/help/daemon/output-protocol) for the canonical pattern.
+
+## Tools
+
+A Lens can enlist Named Tools via the `tools:` field in its frontmatter. Tools give the model server-side capabilities mid-run -- web search, web fetch, and (in time) other server-tools and MCP-bridged tools. The daemon's multi-turn agent loop lets the model interleave tool calls with the eventual `produce_output` call, so a single Lens can fetch a URL, reason over the body, and emit structured output in one run. See [Named Tools](/app/help/daemon/named-tools).
+
 ## Versioning and Forks
 
 Catalog Lenses are versioned. A Lens can be forked, which produces a child entry linked to its parent. Forking captures provenance: you can see the Lens a fork descended from and the changes made.

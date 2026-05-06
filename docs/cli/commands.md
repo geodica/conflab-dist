@@ -87,15 +87,19 @@ conflab msg mark-read my-flab --up-to 200
 
 Manage [Lenses](/app/help/concepts/lenses).
 
-| Subcommand                | Description                                           |
-| ------------------------- | ----------------------------------------------------- |
-| `lens list`               | List all Lenses as a tree. `--json` optional.         |
-| `lens show <path>`        | Show a Lens's metadata and content.                   |
-| `lens create <path>`      | Create or overwrite a Lens. `--file <path>` or stdin. |
-| `lens edit <path>`        | Open a Lens in `$EDITOR`.                             |
-| `lens delete <path>`      | Delete a Lens.                                        |
-| `lens stats <path>`       | Show usage stats for a Lens.                          |
-| `lens clear-stats <path>` | Clear the stats for a Lens.                           |
+| Subcommand                                 | Description                                                                                                |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `lens list`                                | List all Lenses as a tree. `--json` optional.                                                              |
+| `lens show <path>`                         | Show a Lens's metadata and content.                                                                        |
+| `lens create <path>`                       | Create or overwrite a Lens. `--file <path>` or stdin.                                                      |
+| `lens edit <path>`                         | Open a Lens in `$EDITOR`.                                                                                  |
+| `lens delete <path>`                       | Delete a Lens (one slug).                                                                                  |
+| `lens install <slug> [--force]`            | Catalog fetch. Without `--force`, refuses to overwrite a divergent file. With `--force`, clobbers it.      |
+| `lens sync [--force]`                      | Bundle refresh: install / update bundled lenses. Without `--force`, refuses to clobber hand-edits.         |
+| `lens uninstall [--no-backup] [--dry-run]` | Snapshot then remove the bundled lens set. User-authored files are preserved.                              |
+| `lens pristine [--no-backup] [--dry-run]`  | Snapshot then force-sync the bundled lens set to bundled bytes. See [Pristine](/app/help/daemon/pristine). |
+| `lens stats <path>`                        | Show usage stats for a Lens.                                                                               |
+| `lens clear-stats <path>`                  | Clear the stats for a Lens.                                                                                |
 
 ```bash
 conflab lens list
@@ -108,13 +112,17 @@ conflab lens stats coding/review
 
 Manage [Shapes](/app/help/concepts/shapes).
 
-| Subcommand            | Description                                            |
-| --------------------- | ------------------------------------------------------ |
-| `shape list`          | List all Shapes as a tree.                             |
-| `shape show <path>`   | Show a Shape's metadata and content.                   |
-| `shape create <path>` | Create or overwrite a Shape. `--file <path>` or stdin. |
-| `shape edit <path>`   | Open a Shape in `$EDITOR`.                             |
-| `shape delete <path>` | Delete a Shape.                                        |
+| Subcommand                                  | Description                                                                                                 |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `shape list`                                | List all Shapes as a tree.                                                                                  |
+| `shape show <path>`                         | Show a Shape's metadata and content.                                                                        |
+| `shape create <path>`                       | Create or overwrite a Shape. `--file <path>` or stdin.                                                      |
+| `shape edit <path>`                         | Open a Shape in `$EDITOR`.                                                                                  |
+| `shape delete <path>`                       | Delete a Shape (one slug).                                                                                  |
+| `shape install <slug> [--force]`            | Catalog fetch. Without `--force`, refuses to overwrite a divergent file.                                    |
+| `shape sync [--force]`                      | Bundle refresh: install / update bundled shapes. Without `--force`, refuses to clobber hand-edits.          |
+| `shape uninstall [--no-backup] [--dry-run]` | Snapshot then remove the bundled shape set. User-authored files are preserved.                              |
+| `shape pristine [--no-backup] [--dry-run]`  | Snapshot then force-sync the bundled shape set to bundled bytes. See [Pristine](/app/help/daemon/pristine). |
 
 ```bash
 conflab shape list
@@ -158,6 +166,25 @@ Flags:
 | `--shape <path>`       | Override the Shape referenced by the Lens.                          |
 | `--json`               | Output the run result as JSON.                                      |
 
+### `conflab tool`
+
+Manage [Named Tools](/app/help/daemon/named-tools).
+
+| Subcommand                                 | Description                                                                                                |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `tool list`                                | List bundled tool slugs (one per line, no preamble).                                                       |
+| `tool install <slug> [--force]`            | Install a bundled tool fixture. Without `--force`, refuses to overwrite hand-edited files.                 |
+| `tool sync [--force]`                      | Bundle refresh: install / update bundled tools. Without `--force`, refuses to clobber hand-edits.          |
+| `tool delete <slug>`                       | Delete a tool fixture (one slug).                                                                          |
+| `tool uninstall [--no-backup] [--dry-run]` | Snapshot then remove the bundled tool set. User-authored tools are preserved.                              |
+| `tool pristine [--no-backup] [--dry-run]`  | Snapshot then force-sync the bundled tool set to bundled bytes. See [Pristine](/app/help/daemon/pristine). |
+
+```bash
+conflab tool list
+conflab tool install web-search
+conflab tool sync --force
+```
+
 ### `conflab category`
 
 List categories in the Lens/Shape taxonomy.
@@ -197,13 +224,14 @@ conflab model route my-flab claude-haiku
 
 Manage CLI profiles. See [Authentication](/app/help/cli/authentication) for details.
 
-| Subcommand             | Description                         |
-| ---------------------- | ----------------------------------- |
-| `config list`          | List all profiles.                  |
-| `config show [name]`   | Show profile details.               |
-| `config use <name>`    | Switch the active profile.          |
-| `config new <name>`    | Create a new profile (interactive). |
-| `config delete <name>` | Delete a profile.                   |
+| Subcommand                                  | Description                                                                                                                                      |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `config list`                               | List all profiles.                                                                                                                               |
+| `config show [name]`                        | Show profile details.                                                                                                                            |
+| `config use <name>`                         | Switch the active profile.                                                                                                                       |
+| `config new <name>`                         | Create a new profile (interactive).                                                                                                              |
+| `config delete <name>`                      | Delete a profile.                                                                                                                                |
+| `config pristine [--no-backup] [--dry-run]` | Stop daemon, snapshot, clear `config.toml` + `daemon.toml` + `models.toml`, regenerate daemon config. See [Pristine](/app/help/daemon/pristine). |
 
 ### `conflab policy`
 
@@ -311,11 +339,47 @@ conflab doctor
 conflab doctor --json
 ```
 
+### `conflab pristine`
+
+Reset bundled content + config to a fresh-install state, with default-on backup. See [Pristine](/app/help/daemon/pristine).
+
+| Flags                                            | Description                                                                                                                       |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `--all`                                          | Reset all targets (tools, lenses, shapes, config). Equivalent to passing all four flags.                                          |
+| `--config` / `--lenses` / `--shapes` / `--tools` | Select individual targets. Combine to compose subset resets. Targets always run in fixed order: tools → lenses → shapes → config. |
+| `--no-backup`                                    | Skip the snapshot step.                                                                                                           |
+| `--dry-run`                                      | Print what would happen without writing anything.                                                                                 |
+
+```bash
+conflab pristine --all                # nuclear reset, snapshot first
+conflab pristine --all --dry-run      # preview
+conflab pristine --lenses --tools     # surgical: just lenses + tools
+```
+
+### `conflab uninstall`
+
+Remove Conflab from this machine (CLI, daemon, app, LaunchAgent, pkg receipt, CA trust). See [Uninstallation](/app/help/cli/uninstallation).
+
+| Flags         | Description                                                                  |
+| ------------- | ---------------------------------------------------------------------------- |
+| `--dry-run`   | Print the plan, take no action.                                              |
+| `--yes`       | Skip the interactive confirmation.                                           |
+| `--nuke-data` | Also remove `~/.conflab/` and app caches/preferences (preserved by default). |
+
+```bash
+conflab uninstall --dry-run
+conflab uninstall                    # interactive confirmation
+conflab uninstall --yes              # skip confirmation
+conflab uninstall --nuke-data        # wipe data too
+```
+
 ---
 
 ## See Also
 
 - [CLI Installation](/app/help/cli/installation)
+- [CLI Uninstallation](/app/help/cli/uninstallation)
+- [Pristine](/app/help/daemon/pristine)
 - [Authentication](/app/help/cli/authentication)
 - [Claude Code Integration](/app/help/cli/claude-code)
 - [Daemon Overview](/app/help/daemon/overview)

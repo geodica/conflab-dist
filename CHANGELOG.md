@@ -2,8 +2,26 @@
 
 All notable changes to conflab (CLI + daemon) are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.4.1] - 2026-05-06
+
+Patch release on top of v0.4.0. Headline is **ST0111 -- Pristine Config**: a coherent recovery surface that closes the install-side asymmetry from ST0110. New `conflab pristine` verbs across four targets (tools / lenses / shapes / config) plus a top-level `--all` wrapper, with default-on backup safety to `~/.conflab/.backups/<rfc3339-compact>/<target>/`. Symmetric per-noun uninstall (`conflab tool|lens|shape uninstall`) closes the gap between bundled-install and bundled-remove on every noun, and `conflab tool delete <slug>` brings tools to per-slug parity with lens / shape delete. macOS users get a new **Reset** tab in Manage Conflab with two NSAlert-gated buttons (`Uninstall Conflab...` and `Reset to defaults...`) shelling out to the matching CLI verbs, so an Alice user can reach the destructive admin actions without opening a Terminal. Two new help pages (`/app/help/cli/uninstallation` and `/app/help/daemon/pristine`) cover the verb family end-to-end. No breaking changes; no Elixir migrations.
+
+### Added
+
+- **ST0111 -- Pristine Config (entire ST, WP-01..09).** Per-noun `conflab tool|lens|shape|config pristine` plus top-level `conflab pristine [--all|...]` wrapper. Default-on backup at `~/.conflab/.backups/<rfc3339-compact>/<target>/`; `--no-backup` and `--dry-run` available on every verb. Per-noun `run_pristine_at(no_backup, dry_run, dir, backup_root)` is the Highlander entry point; the wrapper resolves the backup root once and threads `<root>/<target>/` sub-paths through each call.
+- **Symmetric per-noun uninstall (ST0111/WP-08).** `conflab tool|lens|shape uninstall [--no-backup] [--dry-run]` removes every bundled slug while preserving user-authored content. `conflab tool delete <slug>` brings tools to per-slug parity with lens / shape delete. Theme uninstall stayed manifest-only.
+- **`conflab config pristine` (ST0111/WP-05).** Stops the daemon, snapshots the three config files, clears them, runs `daemon init` to regenerate `daemon.toml` + `models.toml`, leaves the daemon stopped. Sequence reorders the literal design spec because `daemon_init` reads `config.toml` to derive a profile -- so `config.toml` is removed _after_ daemon-init runs. Test isolation via fn-pointer params on `run_pristine_at`.
+- **macOS Settings Reset tab (ST0111/WP-09).** New panel in Manage Conflab between Trust and About. Two NSAlert-gated buttons (`Uninstall Conflab...` + `Reset to defaults...`) shelling out to the matching CLI verbs via `DaemonCLIShell.runCapturing`. Inline checkbox in the uninstall alert toggles `--nuke-data`. Spinner + status label + read-only result panel for stdout / stderr.
+- **Help-system docs (ST0111/WP-07).** New pages at `/app/help/cli/uninstallation` and `/app/help/daemon/pristine`, registered via `priv/docs/manifest.json` (no LiveView changes). Cross-link sweeps in `priv/docs/cli/{installation,commands}.md` and `priv/docs/daemon/{lsd-bundles,named-tools}.md`.
+- **Backup snapshot primitive (ST0111/WP-01).** `native/cli/src/backup.rs` Highlander on timestamped backup roots and recursive snapshots. RFC-3339 compact form for the directory name. Permissions and mtimes preserved (`cp -p` style); empty / missing sources skip cleanly; symlinks copied as symlinks.
+
+### Changed
+
+- **`native/cli/src/pristine.rs` is the Highlander home for shared pristine + uninstall helpers.** `PristineSummary<S>` generic over per-noun status; `diff_against_bundle(bundled_slugs, dir, slug_for_path)` shared registry-walk helper. Per-noun output formatting stays in each `<noun>_cmd.rs` because theme annotation differs across nouns.
+- **`daemon_cmd::run_init` and `daemon_cmd::run_stop` are now `pub(crate)`.** Load-bearing for `config_cmd::run_pristine_at` to compose them via fn-pointer parameters.
+- **mix.lock patch-level bumps.** phoenix 1.8.6 -> 1.8.7, zoi 0.18.1 -> 0.18.2.
 
 ## [0.4.0] - 2026-05-04
 
@@ -13,7 +31,7 @@ Minor release on top of v0.3.5. Headline is **schema-enforced shapes via Anthrop
 
 - **ST0106 -- Schema-enforced shapes via Anthropic tool-use (WP-01..07).** `Provider::send_message` accepts `tool_choice` + `ToolDef` array (WP-01); `Shape::to_tool_def()` compiles `.shape.json` directly into the Anthropic tool spec (WP-02); `mgmt/helpers` branch enforceable vs synth-prompt paths (WP-03); `.shapemd` placeholders implicitly lifted to JSON-schema-required-fields (WP-04); two-pass `render_shape` walks the shape body with placeholders substituted from the model's call (WP-05); four mfs lenses migrated, system_prompt structural rules stripped, code-fence-echo defect resolved as a side effect (WP-06); compact-format renderer with `{{#var=value}}...{{/var}}` conditional sections (WP-07).
 - **ST0106 -- Multi-turn agent loop (WP-08).** Replaces the v1 single-turn forced-tool-use path with a real Anthropic agent loop. Three locked decisions: `tool_choice: auto` every turn (model opts in); loud `EnforceableShapeNotProduced` failure when `end_turn` arrives without a valid `produce_output`; two hard caps (`max_iterations = 10`, `max_input_tokens = 100_000`) with three-level override (compiled <- daemon.toml <- per-lens frontmatter). SQLite migration v19 adds `agent_loop_trace TEXT` to `runs`; surfaced over GraphQL. Highlander cutover mid-WP: GraphQL `MutationRoot::run`, MCP `run_lens`, and the agent `McpToolDispatcher` thin-wrap a single canonical helper `mgmt::dispatch_lens_run`.
-- **ST0106 -- Convention doc + lens output protocol (WP-09).** `intent/docs/conventions/lens-output-protocol.md` codifies the canonical "Output protocol" stanza for any enforceable lens. Three matts/* lenses migrated; `reading-list-entry` got `tools: [web-fetch]`. Sonnet smoke confirmed the canonical 3-turn loop `web_fetch -> produce_output -> end_turn` end-to-end against a real Anthropic-hosted server-tool.
+- **ST0106 -- Convention doc + lens output protocol (WP-09).** `intent/docs/conventions/lens-output-protocol.md` codifies the canonical "Output protocol" stanza for any enforceable lens. Three matts/\* lenses migrated; `reading-list-entry` got `tools: [web-fetch]`. Sonnet smoke confirmed the canonical 3-turn loop `web_fetch -> produce_output -> end_turn` end-to-end against a real Anthropic-hosted server-tool.
 - **ST0106 -- Integration tests against fake provider (WP-10).** Six scripted-fixture scenarios at `native/daemon/tests/agent_loop_integration.rs` proving the agent loop integrates correctly through both `mgmt::dispatch_lens_run` and the GraphQL `run` mutation against scripted `FakeProvider` sequences. Cross-surface parity scenario covers MCP `run_lens` by transitivity.
 - **ST0107 -- Named-tool registry (WP-01..12).** `~/.conflab/db/tools/<slug>.tool.json` is a new file type joining lenses and shapes; lenses, daemon config, and agent reasoning loops reference tools by symbolic slug. Compile-time slug constants + startup validator make typos fail fast. Lenses can declare `tools: [web-search]` or `tools: [web-fetch]` in frontmatter.
 - **XSS hardening sweep (web + macOS).** Web-side default escaping for any LLM/lens/shape content; LLM responses render via CodeMirror raw text on both surfaces (Phoenix `phx-hook="SourcePreview"`, macOS `ReadOnlyCodeMirror`); macOS `MarkdownFallback` routes through CodeMirror for strict parity. Hostile-by-default rendering everywhere.
@@ -215,7 +233,7 @@ Patch release bundling five steel threads on top of v0.2.0.
 - Cycle flow auto-registers the current machine on first use (was: hard-fail with "No matching host key").
 - Manage window polish: Models-tab keychain access, schema reload, selection flicker, tab-bar overlap, default window size.
 - Auth tab inline cycle URL with copy-to-clipboard icon.
-- Run abort handles pending-* IDs correctly; model selector via `phx-change`; Opus 4.7 is the new default.
+- Run abort handles pending-\* IDs correctly; model selector via `phx-change`; Opus 4.7 is the new default.
 - Daemon `pickPath` GraphQL result matches before the generic catch-all.
 
 ### Security
