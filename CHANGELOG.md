@@ -4,6 +4,19 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-05-06
+
+Patch release on top of v0.4.1. Headline is **ST0112/WP-01 -- First-Run Identity Provisioning (server side)**: the cycle LiveView now auto-provisions a fresh agent when an Alice-style first install hits a never-seen handle, instead of erroring with "no agent ^X exists" and leaving the daemon crash-looping. Quota is now role-based and server-side -- `:admin` and `:superadmin` bypass entirely; `:user` is gated by a single `RuntimeConfig` integer (default 1, operator-tunable). Staging-prep for the macOS-side bind step that ships next (WP-02 + WP-03 + WP-04 land together in the following release). No CLI / daemon / macOS app behaviour changes; .pkg + brew artifacts re-cut with the new version stamp but are functionally identical to v0.4.1.
+
+### Added
+
+- **ST0112/WP-01 -- conflab.space cycle endpoint auto-provisions on absent agent.** When the `/app/daemon/token/cycle` LiveView arrives for a handle the signed-in owner does not yet have an agent for, the LV renders an `:auto_provision` confirm card ("Create agent ^X and bind it to this Mac?") instead of erroring with "no agent ^X exists". On confirm, `Conflab.Accounts.auto_provision_and_register_for_owner/3` runs an atomic `register_agent` + `create_ownership` + inline `create_api_key` inside `Conflab.Repo.transaction`; the new key 302s to the loopback URL and lands in `~/.config/conflab/daemon.toml` automatically. Closes the gyges-style first-install crash-loop where the daemon shipped with a placeholder handle from the Setup wizard's `daemon init` step but no real agent existed on the server.
+- **`Conflab.Accounts.auto_provision_eligible/2`** -- read-only eligibility helper covering reserved handles, role-based quota, and global handle availability. Charset enforced upstream by `ConflabWeb.DaemonConnect.validate_handle/1`.
+
+### Changed
+
+- **Agent quota is now role-based, server-side.** `:admin` and `:superadmin` bypass the quota entirely; `:user` is gated by `Conflab.RuntimeConfig.get_integer("agent.quota_per_user", 1)`. Default flipped from 10 to 1; the `RuntimeConfig` knob remains the operator override (admin LV at `/admin/runtime-settings`, no deploy required). Per-user override deferred.
+
 ## [0.4.1] - 2026-05-06
 
 Patch release on top of v0.4.0. Headline is **ST0111 -- Pristine Config**: a coherent recovery surface that closes the install-side asymmetry from ST0110. New `conflab pristine` verbs across four targets (tools / lenses / shapes / config) plus a top-level `--all` wrapper, with default-on backup safety to `~/.conflab/.backups/<rfc3339-compact>/<target>/`. Symmetric per-noun uninstall (`conflab tool|lens|shape uninstall`) closes the gap between bundled-install and bundled-remove on every noun, and `conflab tool delete <slug>` brings tools to per-slug parity with lens / shape delete. macOS users get a new **Reset** tab in Manage Conflab with two NSAlert-gated buttons (`Uninstall Conflab...` and `Reset to defaults...`) shelling out to the matching CLI verbs, so an Alice user can reach the destructive admin actions without opening a Terminal. Two new help pages (`/app/help/cli/uninstallation` and `/app/help/daemon/pristine`) cover the verb family end-to-end. No breaking changes; no Elixir migrations.
