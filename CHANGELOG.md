@@ -4,6 +4,36 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-05-08
+
+Minor release on top of v0.4.2. Headline is **ST0112 -- First-Run Identity Provisioning closes end-to-end**: WP-01 shipped server-side in v0.4.2; v0.5.0 lands the macOS-side bind step. The CLI's bundled install path cycles a fresh API key for `^CONFLAB` between `daemon init` and `db init`, so an Alice completing the Setup wizard ends with a bound daemon and a real agent on conflab.space rather than a placeholder handle and a crash-loop. The wizard Done step surfaces `^CONFLAB` with a Copy button. Plus the round-2 cold gyges smoke fix batch (WP-05): Apple-compliant 395-day leaf certs with serverAuth EKU (Safari and Chrome both load `https://127.0.0.1:<port>/` without warnings), idempotent `install_trust` (single auth prompt), SHA-1-by-hash keychain enumeration (no more "ambiguous" delete loops), pipeline ordering that puts `daemon restart` last with `KeepAlive=true` for crash recovery, single-dialog Settings Uninstall, and a five-site string sweep correcting "system keychain" -> "login keychain". Plus a server-side fix to the conflab.space layout footer so the build SHA renders correctly under prod.
+
+### Added
+
+- **ST0112/WP-02 -- CLI bundled install binds daemon as `^CONFLAB`** (`bf473355`). `BUNDLED_DEFAULT_AGENT_HANDLE = "CONFLAB"` constant in `daemon_cmd.rs`; `install_setup::apply_bundle` invokes `daemon token cycle --agent CONFLAB` between `daemon init` and `db init`. New `--handle <NAME>` on `daemon init` and `--agent <NAME>` on `daemon token cycle` for re-binding.
+- **ST0112/WP-03 -- macOS Setup wizard Done step surfaces `^CONFLAB`** (`ef87abc9`). Labelled message + Copy button putting the literal handle on the system pasteboard. AppKit-native button-title flip ("Copy ^CONFLAB" -> "Copied \u{2713}") confirms the action.
+- **ST0112/WP-04 -- Docs sweep** (`f0f7ef32`). `installation.md` "After install: how your daemon gets bound" section; `commands.md` documents `--handle` / `--agent`; `uninstallation.md` "Reinstalling" explains the wizard re-cycles against the same handle but does not revoke the agent on the server; `pristine.md` swap-the-identity bullet.
+
+### Fixed
+
+- **ST0112/WP-05 round-2 cold smoke fix batch.** Six bugs caught against a wiped Mac:
+  - **Bug 5** (`e25cd27d`) -- Settings Uninstall single-dialog flow. `cmd_uninstall::run` splits non-privileged inline + privileged `osascript with administrator privileges` batch. ONE auth dialog regardless of how many `[admin]` rows in the plan; works from non-TTY callers.
+  - **Bug 6** (`33e7c731`) -- SHA-1 enumeration replaces ambiguous CN-based delete. New `tls.rs` helpers enumerate by SHA-1 and delete by hash. Fixes "ambiguous, matches more than one certificate" errors.
+  - **Bug 9** (`661e0584`) -- pipeline restart-as-last + `run_start` Err propagation + `KeepAlive=true`. Pipeline reorders so `daemon restart` is final; health-check failure surfaces as `Err`; launchd respawns daemon crashes; 500ms wait between stop and start.
+  - **Bug 11** (`67c2e182`) -- `install_trust` SHA-1 short-circuit. Idempotent re-invocation: compute on-disk CA SHA-1, enumerate keychain hashes, scrub orphans by hash, short-circuit when already trusted. Single auth prompt across call sites.
+  - **Bug 12** (`6d48758d`) -- 395-day leaf certs with serverAuth EKU. `LEAF_VALIDITY_DAYS = 395`; `ExtendedKeyUsagePurpose::ServerAuth` on leaf params; `~/.config/conflab/tls/.policy_v2` marker auto-regenerates v0.4.x certs on first v0.5.0 daemon boot.
+  - **Bug 13** (`f1fb4408`) -- "system keychain" -> "login keychain" string sweep across post-install line, post-cert-generate advisory, `conflab daemon doctor` row, CLI `--help`, `remove_trust` doc comment.
+- **Pre-WP-05 cold-install regression sweep** (`167b5405`). `apply_bundle` did not restart the daemon after host-key cycle; `install_trust` accumulated stale CAs across installs; `conflab uninstall` was probing System.keychain instead of login.keychain-db.
+- **Server-side: footer git SHA correctly rendered** (`df60185d`). `Conflab.BuildInfo` prefers `GIT_SHA` env (Docker / Fly via `--build-arg`), falling through to the local-dev git command. `Dockerfile` declares `ARG GIT_SHA` + `ENV` immediately before `mix compile`. `scripts/deploy` passes `--build-arg GIT_SHA=$(git rev-parse --short HEAD)`.
+
+### Changed
+
+- **Canonical `conflabd::tls::login_keychain_has_ca`** collapses three previously-divergent keychain probes (`install_trust`, `uninstall.rs::keychain_has_cert`, `install_setup.rs::is_ca_trusted`). Locked decision D11.
+- **`install_trust` is a thin coordinator**: read state, dispatch to pure `install_trust_decision`, scrub orphans, execute the one side-effecting branch.
+- **`compute_pem_cert_sha1` Highlander** parses PEM body once; matches `security find-certificate -Z` format.
+- **`daemon_cmd::run_start` propagates health-check failure as `Err`** (No-Silent-Errors).
+- **New dep**: `sha1 = "0.10"`.
+
 ## [0.4.2] - 2026-05-06
 
 Patch release on top of v0.4.1. Headline is **ST0112/WP-01 -- First-Run Identity Provisioning (server side)**: the cycle LiveView now auto-provisions a fresh agent when an Alice-style first install hits a never-seen handle, instead of erroring with "no agent ^X exists" and leaving the daemon crash-looping. Quota is now role-based and server-side -- `:admin` and `:superadmin` bypass entirely; `:user` is gated by a single `RuntimeConfig` integer (default 1, operator-tunable). Staging-prep for the macOS-side bind step that ships next (WP-02 + WP-03 + WP-04 land together in the following release). No CLI / daemon / macOS app behaviour changes; .pkg + brew artifacts re-cut with the new version stamp but are functionally identical to v0.4.1.

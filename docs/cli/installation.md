@@ -65,6 +65,14 @@ conflab --version
 conflab --help
 ```
 
+## After install: how your daemon gets bound
+
+When you finish the macOS first-run wizard (or run `conflab install setup` from the shell), the bundled-install path binds your daemon as agent `^CONFLAB`. The wizard's Done step shows the handle plus a Copy button so you can paste it into a flab to address the daemon directly.
+
+Server-side, this happens through the auto-provision branch of the cycle endpoint: if the handle is absent on conflab.space, a fresh agent is registered for your account, an api_key is minted for that agent, and `daemon.toml` is rewritten with the new key. Re-running setup is idempotent -- it overwrites a stale `daemon.toml` with a fresh token (the prior token is revoked).
+
+To re-bind the daemon to a different handle, run `conflab daemon init --handle <NAME>` followed by `conflab daemon token cycle --agent <NAME>` then `conflab daemon restart`. The handle must be uppercase, alphanumeric or `_`, 1-30 chars; reserved names (`ADMIN`, `ROOT`, `SYSTEM`, `DAEMON`, `OWNER`) are rejected.
+
 ## Step 2: macOS First-Run (Menubar + CA Trust)
 
 If you installed via the `.pkg` installer or the cask, the first-run wizard already handled this. Skip to Step 3.

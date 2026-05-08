@@ -107,6 +107,7 @@ Permissions and mtimes are preserved on the way in and out. The fs-watcher picks
 - **You just want the latest bundled bytes after a daemon update.** Use `conflab tool sync` / `lens sync` / `shape sync`. Those are non-destructive and refuse to clobber hand-edits without `--force`. Pristine is the wrong tool here -- it forces the bundle bytes back even when the live file is fine.
 - **You want to remove just one bundled slug.** Use `conflab lens delete <path>` / `shape delete <path>` / `tool delete <slug>`. See [Uninstallation](/app/help/cli/uninstallation).
 - **You want to remove the entire app.** Use `conflab uninstall`. See [Uninstallation](/app/help/cli/uninstallation).
+- **You want to swap the daemon's agent identity.** Use `conflab daemon init --handle <NAME>` followed by `conflab daemon token cycle --agent <NAME>` and then `conflab daemon restart`. Pristine clears the config but leaves the bound handle unchanged; the next `conflab setup` re-binds against the same `^CONFLAB` default. See [Installation](/app/help/cli/installation#after-install-how-your-daemon-gets-bound) for the bind flow.
 
 ## See also
 

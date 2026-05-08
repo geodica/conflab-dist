@@ -52,7 +52,9 @@ conflab uninstall --yes        # Skip the interactive confirmation.
 conflab uninstall --nuke-data  # Also remove ~/.conflab/ and app caches.
 ```
 
-The CLI confirms before destructive action unless `--yes` is passed. The wipe walks the install paths in order: stop the daemon LaunchAgent, remove `Conflab.app`, remove the `conflab` and `conflabd` binaries, remove the LaunchAgent plist, remove the pkg receipt, remove the CA trust entry from the System keychain (sudo prompt may appear), and -- with `--nuke-data` -- remove `~/.conflab/` and `~/Library/Application Support/Conflab/`.
+The CLI confirms before destructive action unless `--yes` is passed. The wipe walks the install paths in order: quit the menubar app, stop the daemon LaunchAgent, remove the LaunchAgent plist, remove the CA trust entry from your login keychain, remove `Conflab.app`, remove the `conflab` and `conflabd` binaries, drop the pkg receipt, and -- with `--nuke-data` -- remove `~/.conflab/` and `~/Library/Application Support/Conflab/`.
+
+Privileged steps (anything writing under `/Applications/`, `/Library/`, `/usr/local/`, or `pkgutil --forget`) are bundled into a single macOS admin dialog (Touch ID or password). One prompt, regardless of how many `[admin]` rows are in the plan. This works the same way whether you run from Terminal or via the Settings panel's Reset button -- the dialog is mediated by the macOS WindowServer, not by your shell's TTY.
 
 ### Homebrew formula (CLI + daemon, no app)
 
@@ -128,19 +130,22 @@ There is no `conflab backups list / restore` command in v1; manual `cp -p` is th
 
 ## Reinstalling
 
-To reinstall after `conflab uninstall` (without `--nuke-data`), follow [Installation](/app/help/cli/installation). Your `~/.conflab/config.toml`, profiles, and any user-authored Lenses / Shapes / Tools survive the round trip. Run `conflab daemon init` after reinstall to regenerate the daemon config from your profile.
+To reinstall after `conflab uninstall` (without `--nuke-data`), follow [Installation](/app/help/cli/installation). Your `~/.conflab/config.toml`, profiles, and any user-authored Lenses / Shapes / Tools survive the round trip. The first-run wizard re-runs `conflab daemon init` and then `conflab daemon token cycle` against the same handle (`^CONFLAB`); the prior api_key is revoked at cycle time and a fresh one is minted. Your bound agent on conflab.space is preserved across the round trip.
+
+`conflab uninstall` does not revoke the agent on the server -- only the local binaries, app, and LaunchAgent are removed. Re-installing on the same Mac picks up a fresh token automatically. If you want to delete the agent itself (eg before reinstalling on a different account), do so from the [Agents page](/app/agents) first.
 
 To reinstall after `--nuke-data`, you start completely fresh. [Installation](/app/help/cli/installation) walks the full bootstrap.
 
 ## Troubleshooting
 
-| Issue                                                    | Solution                                                                                                       |
-| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `conflab uninstall` reports "not running" for the daemon | The daemon LaunchAgent is already unloaded. Uninstall continues -- the message is informational, not an error. |
-| CA trust removal asks for a password                     | macOS keychain operations require admin privileges. Enter your login password.                                 |
-| `command not found: conflab` post-uninstall              | Expected. The binary has been removed.                                                                         |
-| `~/.conflab/.backups/` is large                          | User-managed; `rm -rf ~/.conflab/.backups/` is the prune. There is no auto-retention.                          |
-| Reinstall complains about a stale pkg receipt            | `sudo pkgutil --forget space.conflab.pkg` then re-run the installer.                                           |
+| Issue                                                    | Solution                                                                                                                                                                                                                                                                             |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `conflab uninstall` reports "not running" for the daemon | The daemon LaunchAgent is already unloaded. Uninstall continues -- the message is informational, not an error.                                                                                                                                                                       |
+| Admin dialog appears mid-uninstall                       | Expected. The privileged-removals batch (anything under `/Applications/`, `/Library/`, `/usr/local/`, plus the pkg receipt) is run via one `osascript ... with administrator privileges` invocation. Cancel it and the elevated steps fail; the non-privileged steps still complete. |
+| Settings panel "Uninstall Conflab..." silently no-ops    | Pre-v0.5.0 behaviour: bare `sudo` could not prompt without a TTY, so every privileged removal failed silently and the binaries survived. Resolved in v0.5.0 by routing privileged steps through `osascript`. Update to v0.5.0 or later.                                              |
+| `command not found: conflab` post-uninstall              | Expected. The binary has been removed.                                                                                                                                                                                                                                               |
+| `~/.conflab/.backups/` is large                          | User-managed; `rm -rf ~/.conflab/.backups/` is the prune. There is no auto-retention.                                                                                                                                                                                                |
+| Reinstall complains about a stale pkg receipt            | `sudo pkgutil --forget space.conflab.pkg` then re-run the installer.                                                                                                                                                                                                                 |
 
 ## See Also
 

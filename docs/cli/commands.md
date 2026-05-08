@@ -272,20 +272,20 @@ conflab plugin inspect filesystem
 
 Manage the conflabd daemon.
 
-| Subcommand                  | Description                                                          |
-| --------------------------- | -------------------------------------------------------------------- |
-| `daemon init`               | Generate daemon config from the active CLI profile.                  |
-| `daemon start`              | Start conflabd as a launchd background service.                      |
-| `daemon stop`               | Stop the running daemon.                                             |
-| `daemon restart`            | Stop and restart the daemon (pick up a cycled token).                |
-| `daemon status`             | Show daemon status.                                                  |
-| `daemon doctor`             | Verify daemon config and connectivity.                               |
-| `daemon logs [-n N] [-f]`   | Tail daemon logs. `-f` streams live output.                          |
-| `daemon log-level [filter]` | Get or set the daemon log level at runtime.                          |
-| `daemon cert <action>`      | Manage TLS certs (generate, install, status, regenerate, explainer). |
-| `daemon token cycle`        | Rotate the daemon's API key via browser confirmation.                |
-| `daemon auth [--copy]`      | Authenticate and print a session token.                              |
-| `daemon password`           | Show the daemon management password.                                 |
+| Subcommand                       | Description                                                                                                                                                                                                           |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `daemon init [--handle X]`       | Generate daemon config from the active CLI profile. `--handle` overrides the bundled default agent handle (`CONFLAB`).                                                                                                |
+| `daemon start`                   | Start conflabd as a launchd background service.                                                                                                                                                                       |
+| `daemon stop`                    | Stop the running daemon.                                                                                                                                                                                              |
+| `daemon restart`                 | Stop and restart the daemon (pick up a cycled token).                                                                                                                                                                 |
+| `daemon status`                  | Show daemon status.                                                                                                                                                                                                   |
+| `daemon doctor`                  | Verify daemon config and connectivity.                                                                                                                                                                                |
+| `daemon logs [-n N] [-f]`        | Tail daemon logs. `-f` streams live output.                                                                                                                                                                           |
+| `daemon log-level [filter]`      | Get or set the daemon log level at runtime.                                                                                                                                                                           |
+| `daemon cert <action>`           | Manage TLS certs (generate, install, status, regenerate, explainer).                                                                                                                                                  |
+| `daemon token cycle [--agent X]` | Rotate the daemon's API key via browser confirmation. Auto-provisions a fresh agent if the handle is absent on the server. `--agent` overrides the handle stored in `daemon.toml` (used by the bundled-install path). |
+| `daemon auth [--copy]`           | Authenticate and print a session token.                                                                                                                                                                               |
+| `daemon password`                | Show the daemon management password.                                                                                                                                                                                  |
 
 See [Daemon Overview](/app/help/daemon/overview), [First-Run](/app/help/daemon/first-run), and [Token Rotation](/app/help/daemon/token-rotation) for detail.
 
