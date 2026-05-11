@@ -4,6 +4,27 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-05-11
+
+Patch release on top of v0.5.0. Headlines: **wizard agent-name prompt** replaces the fixed `^CONFLAB` default with a hostname-derived suggestion per machine; **Tier 2 -- daemon mgmt password persistence** so browser tabs survive `daemon init` reruns; **Bug 14 (ssh uninstall -60007)** via sudo fallback; **Bug 8 fast-fail** lands as `LoopbackOutcome::CycleError` so wizard apply-step failures surface within ~2s; **post-wizard menubar staleness** fixed in three parts (AuthService.refresh, dynamic TLS scheme in APIClient, DaemonService.awaitReady gate).
+
+### Added
+
+- **Wizard agent-name prompt.** `daemon_cmd::derive_default_agent_handle` derives `^<HOSTNAME>` (uppercase, alphanumeric, first dotted segment) from the local hostname; falls back to `CONFLAB` when hostname resolution fails. `SetupBundle.agent_handle: Option<String>` threads the choice through `apply_full_pipeline` (`daemon init --handle X` + `daemon token cycle --agent X`). macOS wizard inserts an `AgentStepView` between Connect and Models with a text field defaulted to the hostname-derived suggestion and a live `^<name>` preview. `dump-current` reads the bound handle from `daemon.toml` so re-runs hydrate with what's actually bound.
+- **Tier 2 -- daemon mgmt password persistence.** New `preserve_existing_mgmt_password/2` in `daemon_cmd.rs` reads existing `daemon.toml` before write, lifts `[management].password` if present, injects into the freshly-generated content via `toml_edit`. Idempotent across `daemon init` reruns. Browser tabs holding daemon_tokens in localStorage survive setup re-runs.
+
+### Fixed
+
+- **Bug 14 -- ssh uninstall -60007.** `conflab uninstall --yes` over ssh returned `errAuthorizationInteractionNotAllowed` (-60007) from osascript-with-administrator-privileges. Fix: detect `SSH_CONNECTION` / `SSH_TTY` / `SSH_CLIENT` env vars and route the admin batch through bare `sudo /bin/sh -c <script>`. Same payload either way; only the elevation mechanism changes. Terminal.app and the macOS Settings Reset panel keep the osascript path.
+- **Bug 8 -- wizard cycle-error fast-fail (`LoopbackOutcome::CycleError`).** New variant on the Rust loopback enum carrying `{ reason, detail }`; `ParsedRequest::Error` extended with `detail`; `CYCLE_ERROR_HTML` template surfaces the reason in the browser tab; `run_token_cycle` propagates the detail as the CLI error message. Server-side cycle errors surface within ~2s instead of timing out after 60-600s.
+- **Post-wizard menubar staleness (three parts).** (1) `AuthService.refresh()` re-reads `config.toml` post-wizard so the menubar picks up the cycled api_key. (2) `APIClient.defaultTarget` is now a computed property (was captured at init time, before `cert.pem` existed). (3) `DaemonService.awaitReady(timeoutMs:pollIntervalMs:)` bounded-retry gate ensures `SetupRunner.apply()` waits for the restarted daemon to bind its port before declaring success.
+
+### Changed
+
+- **`BUNDLED_DEFAULT_AGENT_HANDLE` renamed to `FALLBACK_DEFAULT_AGENT_HANDLE`.** It's no longer the primary default -- it's the last-resort fallback when hostname derivation fails. Callers should use `daemon_cmd::default_agent_handle()` for the user-facing default.
+- **`SetupBundle.agent_handle: Option<String>`** mirrored across the Rust and Swift representations. `None` lets the CLI derive a hostname-based default; `Some(name)` honours the wizard pick. Returned by `--dump-current` for re-run hydration.
+- **`apply_full_pipeline` passes `--handle X` to `daemon init`.** Previously `daemon init` wrote the bundled default and `daemon token cycle --agent X` overwrote it; both now pass the same handle from the bundle.
+
 ## [0.5.0] - 2026-05-08
 
 Minor release on top of v0.4.2. Headline is **ST0112 -- First-Run Identity Provisioning closes end-to-end**: WP-01 shipped server-side in v0.4.2; v0.5.0 lands the macOS-side bind step. The CLI's bundled install path cycles a fresh API key for `^CONFLAB` between `daemon init` and `db init`, so an Alice completing the Setup wizard ends with a bound daemon and a real agent on conflab.space rather than a placeholder handle and a crash-loop. The wizard Done step surfaces `^CONFLAB` with a Copy button. Plus the round-2 cold gyges smoke fix batch (WP-05): Apple-compliant 395-day leaf certs with serverAuth EKU (Safari and Chrome both load `https://127.0.0.1:<port>/` without warnings), idempotent `install_trust` (single auth prompt), SHA-1-by-hash keychain enumeration (no more "ambiguous" delete loops), pipeline ordering that puts `daemon restart` last with `KeepAlive=true` for crash recovery, single-dialog Settings Uninstall, and a five-site string sweep correcting "system keychain" -> "login keychain". Plus a server-side fix to the conflab.space layout footer so the build SHA renders correctly under prod.
