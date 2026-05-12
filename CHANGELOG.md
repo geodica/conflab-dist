@@ -4,6 +4,28 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2026-05-12
+
+Emergency patch on top of v0.5.2. The Launcher Run flow broke under real-user testing within minutes of the v0.5.2 ship; v0.5.3 closes seven bugs in one go. End-to-end after v0.5.3: drop two `.md` meeting transcripts onto a `texteditor+files` variable, click Run, watch Haiku complete in two turns (221k input -> 2.2k output) and Opus complete in two turns (298k input -> 2.8k output), see real structured output. Plus three new daemon INFO lines so a run reads as a lifecycle thread instead of a silent-then-done event.
+
+### Fixed
+
+- **Launcher Run flow works end-to-end for shape-typed lenses with file attachments.** Four-arm fix: (a) Swift `RunFormView.canRun` accepts file-only required `texteditor+files` / `text+files` variables; (b) daemon `template::interpolator::validate` accepts `<name>_files` sidecar paths as a valid "filled" state for the same types; (c) new daemon `helpers::hydrate_file_variables` auto-loads attached file contents into the named variable for non-Lua lenses, with `## File: <basename>` headers, `---` separators, 2 MB cap, IN-AG-NO-SILENT-001 failure propagation, sidecar preserved; (d) `LensLibraryService.runLens(timeout: 300)` with `LensLibraryError.runTimedOut` mapping for `URLError.timedOut` so slow Opus / Sonnet runs no longer mis-label as "daemon unreachable".
+
+- **`ServerTarget.daemon()` global timeout 5s -> 30s.** Run mutation gets its own per-call 300s budget via `APIClient.graphql(timeout:)`; other daemon calls inherit the new 30s default.
+
+- **Decision-B error names the model + suggests Opus / Sonnet over Haiku.** `agent_loop::LoopError::EnforceableShapeNotProduced` gained a `model: String` field populated from `trace.last().model.clone()`. Display string now reads "model `<name>` did not call `produce_output` ... try Opus / Sonnet -- Haiku is measurably less reliable at tool-use compliance for shape-typed lenses".
+
+- **Daemon `MAX_INPUT_TOKENS_DEFAULT` 100k -> 200k.** Matches Claude 4's standard context window so real meeting transcripts (~150k tokens) don't trip the loop's input cap on the first turn. Override paths unchanged: `daemon.toml [agent_loop]` or per-lens `agent_loop:` frontmatter. Menubar UI surfacing deferred to v0.5.4.
+
+- **Lens run lifecycle logging.** Three new INFO breadcrumbs at `dispatch_lens_run` entry (`lens run dispatching` with template path + overrides + variable count), at hydration completion when bytes grew (`lens file attachments hydrated into text slot` with bytes_hydrated), and at agent loop entry (`agent loop starting` with shape + tool counts + caps).
+
+### Migration notes
+
+- **No breaking changes** to CLI verbs, daemon API, on-disk layouts, or the wire protocol between conflabc and conflabd.
+- **For shape-typed lenses with file inputs**, prefer Opus or Sonnet -- Haiku may ignore the `produce_output` tool instruction.
+- **For inputs >200k tokens**, raise the cap via `daemon.toml [agent_loop] max_input_tokens = N` (operator-wide) or per-lens `agent_loop: { max_input_tokens: N }` frontmatter.
+
 ## [0.5.2] - 2026-05-12
 
 Patch release on top of v0.5.1. Headlines: **ST0113 -- Cold-install agent flab onboarding closes end-to-end** with daemon-side membership-change reactivity (cache-merge + dynamic ws subscribe) and a corrected wizard / CLI "invite your agent" hint; **WP-01 follow-up** evicts removed flab memberships and refreshes granted_caps mid-run, closing two correctness gaps in the just-shipped reactivity surface (the eviction gap caused a full ws disconnect+reconnect every poll); **bundle drift detection** lands as a CLI test that asserts every bundled lens/shape/theme matches its `priv/data/lsd/` publication source byte-for-byte; **Settings → Reset → Repair Daemon…** affordance closes the existing-broken-install repair surface; four UX polish fixes: nav buttons drop right-to-left on viewport shrink (Dashboard anchors), theme toggle reachable on every viewport via avatar-menu submenu + top-nav fold relaxed to `xl`, Settings → About content enlarged.
