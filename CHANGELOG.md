@@ -4,6 +4,32 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-05-12
+
+Patch release on top of v0.5.1. Headlines: **ST0113 -- Cold-install agent flab onboarding closes end-to-end** with daemon-side membership-change reactivity (cache-merge + dynamic ws subscribe) and a corrected wizard / CLI "invite your agent" hint; **WP-01 follow-up** evicts removed flab memberships and refreshes granted_caps mid-run, closing two correctness gaps in the just-shipped reactivity surface (the eviction gap caused a full ws disconnect+reconnect every poll); **bundle drift detection** lands as a CLI test that asserts every bundled lens/shape/theme matches its `priv/data/lsd/` publication source byte-for-byte; **Settings → Reset → Repair Daemon…** affordance closes the existing-broken-install repair surface; four UX polish fixes: nav buttons drop right-to-left on viewport shrink (Dashboard anchors), theme toggle reachable on every viewport via avatar-menu submenu + top-nav fold relaxed to `xl`, Settings → About content enlarged.
+
+### Added
+
+- **ST0113 -- Cold-install agent flab onboarding.** Daemon's `connected_flabs` + `flab_id_by_slug` + `participant_ids` caches now refresh on every `check_messages` MCP call: diff fresh `list_flabs()` against the caches, resolve participant via `list_participants` for each new flab, merge into the three RwLock-guarded caches, and forward the new flab_id to the ws task which emits a Phoenix `phx_join` mid-run. Realtime `new_message` pushes start arriving without daemon restart. Channel widens to `FlabSubscribeReq::{Subscribe, Unsubscribe}` for symmetry with eviction. Plus a corrected wizard / CLI "invite your agent" hint on both the Swift `DoneStepView` body and the CLI `install_setup.rs` "Setup complete." print -- replaces the misleading pre-v0.5.2 "Address it in any flab to summon it" prose.
+- **WP-01 follow-up -- eviction + granted_caps refresh.** Boy-scout closure on two correctness gaps in the just-shipped WP-01: when a flab is removed from `list_flabs` (eg the daemon's agent was ejected) the daemon now evicts from all four state caches and emits `phx_leave` via the same membership-change channel (was: ws stayed subscribed to the dead Phoenix topic, server returned `phx_error`, full ws disconnect+reconnect every poll until restart); plus `state.granted_capabilities` now refreshes for mid-run discoveries (was: granted authority on a new flab didn't take effect until restart).
+- **Bundle drift detection.** New registry-driven test in `lens_cmd::tests` walks `priv/data/lsd/` once into a filename map, then iterates `bundled_lenses()` / `bundled_shapes()` / `bundled_themes()` and asserts byte equality with each publication-source file. Mismatches accumulate into a single comprehensive panic message. Tools exempt -- ST0109/WP-01 already collapsed them to a single cross-crate `include_str!` source.
+- **Settings → Reset → `Repair Daemon…`.** Non-destructive recovery affordance as the first button on the Reset tab. Hands off to the Setup wizard hydrated from current state -- same path as the Daemon tab's HTTPS-row "Setup…" button, surfaced under a more discoverable label. Closes the long-standing "existing-broken-install repair surface" gap.
+
+### Fixed
+
+- **Nav buttons drop right-to-left on viewport shrink.** Pre-v0.5.2 the Dashboard button (leftmost) was the first to disappear when the page narrowed below ~1024 px. Reassigned breakpoints so priority items survive longest: theme toggle → Catalog → Shapes → Lenses → Flabs all drop before Dashboard (which now always anchors left).
+- **Theme toggle reachable on every viewport.** The dark/light/system toggle was effectively hidden on most laptops (fold introduced + then relaxed in this release). Final shape: top-nav pill at viewports ≥ 1280 px, plus a daisyUI nested-details "Theme" submenu in the avatar menu at every viewport. Same `phx:set-theme` JS dispatch on both paths.
+- **Settings → About content enlarged.** Logo + title + body + version stamp bumped to fill more of the panel's real estate; previously the content was visually lost in the window.
+
+### Changed
+
+- **`flab_subscribe_tx: mpsc::Sender<FlabSubscribeReq>`** on `DaemonState` (was `Sender<String>`). New enum variants `Subscribe(String) | Unsubscribe(String)` carry the operation alongside the flab_id; the ws bridge dispatches `phx_join` vs `phx_leave` accordingly.
+
+### Migration notes
+
+- **No breaking changes** to CLI verbs, daemon API, on-disk layouts, or the wire protocol between conflabc and conflabd.
+- **Existing flab memberships pick up automatically.** Wherever your daemon already participates, no action needed. The new reactivity activates the next time `check_messages` runs.
+
 ## [0.5.1] - 2026-05-11
 
 Patch release on top of v0.5.0. Headlines: **wizard agent-name prompt** replaces the fixed `^CONFLAB` default with a hostname-derived suggestion per machine; **Tier 2 -- daemon mgmt password persistence** so browser tabs survive `daemon init` reruns; **Bug 14 (ssh uninstall -60007)** via sudo fallback; **Bug 8 fast-fail** lands as `LoopbackOutcome::CycleError` so wizard apply-step failures surface within ~2s; **post-wizard menubar staleness** fixed in three parts (AuthService.refresh, dynamic TLS scheme in APIClient, DaemonService.awaitReady gate).
