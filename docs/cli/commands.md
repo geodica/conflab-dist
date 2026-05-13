@@ -133,13 +133,14 @@ conflab shape create review-summary --file ~/work/review.shapemd
 
 Inspect and manage Run executions.
 
-| Subcommand          | Description                                                              |
-| ------------------- | ------------------------------------------------------------------------ |
-| `runs list`         | List run history. `--status <s>`, `--lens <p>`, `--limit <n>`, `--json`. |
-| `runs show <id>`    | Show full detail for a run.                                              |
-| `runs approve <id>` | Approve a paused workflow step. `--variables '<json>'` optional.         |
-| `runs abort <id>`   | Abort a running or paused workflow.                                      |
-| `runs delete <id>`  | Delete a terminal run from history.                                      |
+| Subcommand          | Description                                                                                                                 |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `runs list`         | List run history. `--status <s>`, `--lens <p>`, `--limit <n>`, `--json`.                                                    |
+| `runs show <id>`    | Show full detail for a run.                                                                                                 |
+| `runs approve <id>` | Approve a paused workflow step. `--variables '<json>'` optional.                                                            |
+| `runs abort <id>`   | Abort a running or paused workflow.                                                                                         |
+| `runs delete <id>`  | Delete a terminal run from history.                                                                                         |
+| `runs retry <id>`   | Re-issue an existing run's rendered prompt. `--prompt`, `--system`, `--model` overrides optional. `--json` for JSON output. |
 
 ```bash
 conflab runs list --status paused
@@ -202,13 +203,14 @@ conflab category list --json
 
 Manage [Models](/app/help/concepts/models) (LLM provider configurations).
 
-| Subcommand                         | Description                                                            |
-| ---------------------------------- | ---------------------------------------------------------------------- |
-| `model list`                       | List configured models. `--json` optional.                             |
-| `model update <name> --model <id>` | Update a model. `--provider`, `--api-key`, `--system-prompt` optional. |
-| `model default <name>`             | Set the default model for Lens execution.                              |
-| `model route <flab> <model>`       | Route a flab to a specific model.                                      |
-| `model unroute <flab>`             | Remove a flab's model override.                                        |
+| Subcommand                         | Description                                                                                                                     |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `model list`                       | List configured models. `--json` optional.                                                                                      |
+| `model update <name> --model <id>` | Update a model. `--provider`, `--api-key`, `--system-prompt` optional.                                                          |
+| `model default <name>`             | Set the default model for Lens execution.                                                                                       |
+| `model route <flab> <model>`       | Route a flab to a specific model.                                                                                               |
+| `model unroute <flab>`             | Remove a flab's model override.                                                                                                 |
+| `model verify-key <provider>`      | Probe the stored provider API key with a 1-token call. Returns `ok` plus a short reason. Plaintext key never leaves the daemon. |
 
 ```bash
 conflab model list
@@ -256,11 +258,13 @@ conflab policy set-model claude-opus --profile full
 
 Inspect plugins registered with the daemon.
 
-| Subcommand              | Description                                  |
-| ----------------------- | -------------------------------------------- |
-| `plugin inspect <name>` | Show sandbox profile for a plugin. `--json`. |
+| Subcommand              | Description                                                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `plugin list`           | List loaded MCP plugins -- name, version, state, tool count. `--json` optional.                                          |
+| `plugin inspect <name>` | Show the sandbox profile for a specific plugin (SBPL on macOS plus a platform-independent permission summary). `--json`. |
 
 ```bash
+conflab plugin list
 conflab plugin inspect filesystem
 ```
 
@@ -272,20 +276,24 @@ conflab plugin inspect filesystem
 
 Manage the conflabd daemon.
 
-| Subcommand                       | Description                                                                                                                                                                                                           |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `daemon init [--handle X]`       | Generate daemon config from the active CLI profile. `--handle` overrides the bundled default agent handle (`CONFLAB`).                                                                                                |
-| `daemon start`                   | Start conflabd as a launchd background service.                                                                                                                                                                       |
-| `daemon stop`                    | Stop the running daemon.                                                                                                                                                                                              |
-| `daemon restart`                 | Stop and restart the daemon (pick up a cycled token).                                                                                                                                                                 |
-| `daemon status`                  | Show daemon status.                                                                                                                                                                                                   |
-| `daemon doctor`                  | Verify daemon config and connectivity.                                                                                                                                                                                |
-| `daemon logs [-n N] [-f]`        | Tail daemon logs. `-f` streams live output.                                                                                                                                                                           |
-| `daemon log-level [filter]`      | Get or set the daemon log level at runtime.                                                                                                                                                                           |
-| `daemon cert <action>`           | Manage TLS certs (generate, install, status, regenerate, explainer).                                                                                                                                                  |
-| `daemon token cycle [--agent X]` | Rotate the daemon's API key via browser confirmation. Auto-provisions a fresh agent if the handle is absent on the server. `--agent` overrides the handle stored in `daemon.toml` (used by the bundled-install path). |
-| `daemon auth [--copy]`           | Authenticate and print a session token.                                                                                                                                                                               |
-| `daemon password`                | Show the daemon management password.                                                                                                                                                                                  |
+| Subcommand                            | Description                                                                                                                                                                                                           |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `daemon init [--handle X]`            | Generate daemon config from the active CLI profile. `--handle` overrides the bundled default agent handle (`CONFLAB`).                                                                                                |
+| `daemon start`                        | Start conflabd as a launchd background service.                                                                                                                                                                       |
+| `daemon stop`                         | Stop the running daemon. Tries a graceful shutdown via the management API first (5s timeout); falls back to `launchctl unload` if the daemon is unreachable or refuses.                                               |
+| `daemon restart`                      | Stop and restart the daemon (pick up a cycled token).                                                                                                                                                                 |
+| `daemon status`                       | Show daemon status.                                                                                                                                                                                                   |
+| `daemon doctor`                       | Verify daemon config and connectivity.                                                                                                                                                                                |
+| `daemon logs [-n N] [-f]`             | Tail daemon logs. `-f` streams live output.                                                                                                                                                                           |
+| `daemon clear-logs`                   | Delete rolled-out daemon log files (today's open log is preserved). Reports files-deleted and bytes-freed.                                                                                                            |
+| `daemon log-level [filter]`           | Get or set the daemon log level at runtime.                                                                                                                                                                           |
+| `daemon config show <daemon\|agents>` | Print the raw contents of `daemon.toml` or `models.toml` from disk.                                                                                                                                                   |
+| `daemon config save <daemon\|agents>` | Replace `daemon.toml` or `models.toml` with content from a file (`--file <path>`) or stdin (`-`). The daemon validates the new content before persisting and hot-reloads dependent state.                             |
+| `daemon caps [show \| set]`           | Show or set the operator-wide agent-loop caps (`max_iterations`, `max_input_tokens`). `set` accepts `--iterations N` and/or `--tokens N` and persists to `daemon.toml` with hot-reload.                               |
+| `daemon cert <action>`                | Manage TLS certs (generate, install, status, regenerate, explainer).                                                                                                                                                  |
+| `daemon token cycle [--agent X]`      | Rotate the daemon's API key via browser confirmation. Auto-provisions a fresh agent if the handle is absent on the server. `--agent` overrides the handle stored in `daemon.toml` (used by the bundled-install path). |
+| `daemon auth [--copy]`                | Authenticate and print a session token.                                                                                                                                                                               |
+| `daemon password`                     | Show the daemon management password.                                                                                                                                                                                  |
 
 See [Daemon Overview](/app/help/daemon/overview), [First-Run](/app/help/daemon/first-run), and [Token Rotation](/app/help/daemon/token-rotation) for detail.
 

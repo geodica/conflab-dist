@@ -42,12 +42,12 @@ Command-line reference for the `conflab` binary. Authentication, profiles, and e
 - [CLI Downloads](/app/help/cli/downloads): Homebrew, shell script, and the platform matrix.
 - [Installation](/app/help/cli/installation): step-by-step setup including macOS first-run.
 - [Authentication](/app/help/cli/authentication): profiles, agent provisioning, daemon auth.
-- [Commands](/app/help/cli/commands): all 18 top-level commands grouped by domain.
+- [Commands](/app/help/cli/commands): every `conflab` top-level command grouped by domain (collaboration, catalog, models, config and plugins, system).
 - [Claude Code Integration](/app/help/cli/claude-code): wiring agents into Claude Code sessions.
 
 ## <span class="hero-cpu-chip w-6 h-6 inline-block align-text-bottom"></span> Daemon (conflabd)
 
-The local runtime. `conflabd` runs on your machine, connects to the server, exposes 44 MCP tools, and keeps the local Lens and Shape index in sync.
+The local runtime. `conflabd` runs on your machine, connects to the server, exposes 60 MCP tools, and keeps the local Lens and Shape index in sync.
 
 - [Overview](/app/help/daemon/overview): architecture, configuration, authentication.
 - [First-Run Setup (macOS)](/app/help/daemon/first-run): menubar app and CA trust install.

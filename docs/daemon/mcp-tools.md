@@ -4,18 +4,20 @@ title: MCP Tools Reference
 
 # MCP Tools Reference
 
-conflabd exposes 44 MCP tools that LLM agents use to interact with Conflab. Tools are grouped by domain:
+conflabd exposes 60 MCP tools that LLM agents use to interact with Conflab. Tools are grouped by domain:
 
 - [Messaging](#messaging) (4)
 - [Flabs](#flabs) (7)
 - [Tasks](#tasks) (2)
 - [Memory](#memory) (3)
-- [Lenses](#lenses) (6)
+- [Lenses](#lenses) (7)
 - [Shapes](#shapes) (4)
-- [Runs](#runs) (5)
-- [Models](#models) (3)
+- [Runs](#runs) (6)
+- [Models](#models) (8)
+- [Policy](#policy) (4)
+- [Plugins](#plugins) (1)
 - [App](#app-macos) (3)
-- [Daemon](#daemon) (5)
+- [Daemon](#daemon) (9)
 - [Categories](#categories) (1)
 - [Resources](#resources) (1)
 
@@ -273,6 +275,14 @@ Get usage statistics for a Lens (run count, success/failure, token usage).
 | --------- | ------ | -------------------- |
 | `path`    | string | Required. Lens path. |
 
+### `clear_lens_stats`
+
+Clear the recorded usage statistics for a Lens. Returns `{ path, cleared }` -- `cleared: true` if a stats row was removed, `cleared: false` if no stats had been recorded yet.
+
+| Parameter | Type   | Description          |
+| --------- | ------ | -------------------- |
+| `path`    | string | Required. Lens path. |
+
 ---
 
 ## Shapes
@@ -353,6 +363,21 @@ Delete a terminal (completed / failed / aborted) run from history.
 | --------- | ------ | ----------------- |
 | `id`      | string | Required. Run ID. |
 
+### `send_run_prompt`
+
+Re-issue a Run's rendered prompt against the daemon. Useful for retrying a failed Run with optional overrides (different model, different system prompt) without re-rendering the Lens from scratch.
+
+| Parameter       | Type   | Description                                                          |
+| --------------- | ------ | -------------------------------------------------------------------- |
+| `id`            | string | Required. Run ID of an existing Run whose rendered prompt is reused. |
+| `prompt`        | string | Optional. Override the prompt body.                                  |
+| `system_prompt` | string | Optional. Override the system prompt.                                |
+| `model`         | string | Optional. Override the model config name.                            |
+
+```
+send_run_prompt(id: "a1b2c3", model: "claude-opus-4-7")
+```
+
 ---
 
 ## Models
@@ -382,6 +407,121 @@ Set the default model for Lens execution.
 | Parameter | Type   | Description                  |
 | --------- | ------ | ---------------------------- |
 | `name`    | string | Required. Model config name. |
+
+### `add_model`
+
+Add a new model entry to `models.toml`. The daemon validates the provider name and persists the entry; the model is immediately available for Lens execution.
+
+| Parameter       | Type    | Description                                                                    |
+| --------------- | ------- | ------------------------------------------------------------------------------ |
+| `name`          | string  | Required. Friendly name (eg `claude-opus`). Becomes the `[models.<name>]` key. |
+| `provider`      | string  | Required. Provider slug (`anthropic`, `openai`, `google`, etc).                |
+| `model`         | string  | Required. Provider-side model identifier (eg `claude-opus-4-7`).               |
+| `api_key`       | string  | Optional. Stored under `[providers.<provider>]` if supplied.                   |
+| `system_prompt` | string  | Optional. Per-model system prompt prepended to Lens runs that use this model.  |
+| `set_default`   | boolean | Optional. If true, also sets this as the daemon-wide default model.            |
+
+```
+add_model(name: "claude-opus", provider: "anthropic", model: "claude-opus-4-7", api_key: "sk-ant-...")
+```
+
+### `remove_model`
+
+Remove a model entry from `models.toml`. Fails if the model is currently set as the default; clear the default with `set_default_model` first.
+
+| Parameter | Type   | Description                  |
+| --------- | ------ | ---------------------------- |
+| `name`    | string | Required. Model config name. |
+
+### `set_flab_route`
+
+Route messages from a specific flab to a named model. Overrides the daemon-wide default model for that flab's runs.
+
+| Parameter | Type   | Description                                       |
+| --------- | ------ | ------------------------------------------------- |
+| `flab`    | string | Required. Flab slug.                              |
+| `model`   | string | Required. Model config name to route the flab to. |
+
+### `remove_flab_route`
+
+Clear a flab's model override and revert to the daemon-wide default.
+
+| Parameter | Type   | Description          |
+| --------- | ------ | -------------------- |
+| `flab`    | string | Required. Flab slug. |
+
+### `verify_provider_key`
+
+Issue a 1-token probe against the provider's cheapest endpoint to confirm the stored API key is accepted. Returns `{ok, reason}`. The plaintext key never leaves the daemon.
+
+| Parameter  | Type   | Description                                                               |
+| ---------- | ------ | ------------------------------------------------------------------------- |
+| `provider` | string | Required. Provider name (case-insensitive: `anthropic` / `openai` / ...). |
+
+```
+verify_provider_key(provider: "anthropic")
+```
+
+---
+
+## Policy
+
+The MCP policy engine gates which tools each model can invoke. Profiles bundle capability sets; per-model overrides let you grant or deny on a finer-grained basis.
+
+### `get_policy_config`
+
+Return the current policy state: the global policy (profile, capabilities, deny list, rate limit), all per-model overrides, and the catalogue of available built-in profiles.
+
+```
+get_policy_config
+```
+
+### `set_global_policy`
+
+Set the daemon-wide default policy. Provide either a built-in `profile` name (`minimal`, `standard`, `full`) or explicit `capabilities` / `deny` arrays.
+
+| Parameter              | Type            | Description                                              |
+| ---------------------- | --------------- | -------------------------------------------------------- |
+| `profile`              | string          | Optional. Named profile (`minimal`, `standard`, `full`). |
+| `capabilities`         | array of string | Optional. Explicit capability allowlist.                 |
+| `deny`                 | array of string | Optional. Explicit capability denylist.                  |
+| `max_calls_per_minute` | integer         | Optional. Rate limit applied across all MCP tool calls.  |
+
+```
+set_global_policy(profile: "standard", max_calls_per_minute: 60)
+```
+
+### `set_model_policy`
+
+Override the global policy for a specific model. Models without an override fall through to the global policy.
+
+| Parameter              | Type            | Description                                  |
+| ---------------------- | --------------- | -------------------------------------------- |
+| `model`                | string          | Required. Model config name.                 |
+| `profile`              | string          | Optional. Named profile.                     |
+| `capabilities`         | array of string | Optional. Explicit allowlist for this model. |
+| `deny`                 | array of string | Optional. Explicit denylist for this model.  |
+| `max_calls_per_minute` | integer         | Optional. Per-model rate limit.              |
+
+### `remove_model_policy`
+
+Remove a per-model override. The model reverts to the global policy.
+
+| Parameter | Type   | Description                  |
+| --------- | ------ | ---------------------------- |
+| `model`   | string | Required. Model config name. |
+
+---
+
+## Plugins
+
+### `list_plugins`
+
+List loaded MCP plugins. Each entry includes name, version, state (running / failed / etc), and the set of tools the plugin exposes. No parameters.
+
+```
+list_plugins
+```
 
 ---
 
@@ -436,6 +576,43 @@ Change daemon log level at runtime.
 | Parameter | Type   | Description                                 |
 | --------- | ------ | ------------------------------------------- |
 | `filter`  | string | Required. eg `"debug"`, `"info,rmcp=warn"`. |
+
+### `get_log_level`
+
+Read the current daemon log filter string (eg `"info"`, `"info,rmcp=warn"`). No parameters.
+
+```
+get_log_level
+```
+
+### `get_health`
+
+Get the daemon's configured-models health snapshot: the list of models, the default model name, and the flab routing table. No parameters.
+
+```
+get_health
+```
+
+### `get_agent_loop_caps`
+
+Read the operator-wide agent-loop caps held in daemon state: `max_iterations` (provider round-trips per run) and `max_input_tokens` (cumulative input tokens across all turns). Reflects any in-memory updates since startup, including those made via the menubar Settings panel. No parameters.
+
+```
+get_agent_loop_caps
+```
+
+### `set_agent_loop_caps`
+
+Update the operator-wide agent-loop caps. Persists the new values to `daemon.toml` and hot-reloads the in-memory state without restarting the daemon. A Run already in flight keeps the caps that resolved when it started; the new caps apply to the next Run.
+
+| Parameter          | Type    | Description                                         |
+| ------------------ | ------- | --------------------------------------------------- |
+| `max_iterations`   | integer | Required. 1 <= n <= 1000.                           |
+| `max_input_tokens` | number  | Required. 1_000 <= n <= 5_000_000 (integer-valued). |
+
+```
+set_agent_loop_caps(max_iterations: 20, max_input_tokens: 500000)
+```
 
 ---
 

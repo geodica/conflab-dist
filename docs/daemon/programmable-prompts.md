@@ -151,7 +151,7 @@ local result = bridge.mcp(tool_name, params)
 
 #### Available Tools
 
-All 44 MCP tools exposed by the daemon are callable via `bridge.mcp(...)`. A few commonly used ones:
+All 60 MCP tools exposed by the daemon are callable via `bridge.mcp(...)`. A few commonly used ones:
 
 | Tool              | Parameters                           | Description                           |
 | ----------------- | ------------------------------------ | ------------------------------------- |
@@ -171,7 +171,7 @@ All 44 MCP tools exposed by the daemon are callable via `bridge.mcp(...)`. A few
 | `resolve`         | `{url}`                              | Resolve a `flab://` URL.              |
 | `daemon_logs`     | `{lines?, grep?}`                    | Read daemon log entries.              |
 
-See [MCP Tools Reference](/app/help/daemon/mcp-tools) for the complete 44-tool catalogue with parameter tables and response shapes.
+See [MCP Tools Reference](/app/help/daemon/mcp-tools) for the complete 60-tool catalogue with parameter tables and response shapes.
 
 Plugin tools are also accessible using the `plugin_name.tool_name` convention.
 

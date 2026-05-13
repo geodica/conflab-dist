@@ -80,7 +80,7 @@ How to debug:
 The agent loop has two hard caps:
 
 - `max_iterations` -- ceiling on provider round-trips per run. Default `10`.
-- `max_input_tokens` -- ceiling on cumulative input tokens summed across all turns. Default `100_000`.
+- `max_input_tokens` -- ceiling on cumulative input tokens summed across all turns. Default `200_000`.
 
 Most Lenses never hit either cap. If yours legitimately needs more (eg a Lens that fetches multiple URLs and synthesises across them), set `agent_loop:` in the Lens's frontmatter:
 
@@ -102,7 +102,7 @@ The resolution order, highest precedence first:
 
 1. The Lens's frontmatter `agent_loop:` map.
 2. The operator's `daemon.toml` `[agent_loop]` section (`max_iterations` and `max_input_tokens`, each independently optional).
-3. The compiled defaults (`10` and `100_000`).
+3. The compiled defaults (`10` and `200_000`).
 
 When a cap fires the run fails with a clear error message naming the cap, the actual usage, and the override paths.
 
@@ -116,7 +116,7 @@ For a new enforceable Lens:
 - [ ] Fallback rule is filled in (placeholder strings or named markers, consistent register across the whole Lens).
 - [ ] Tool policy bullet's tail is filled in if the Lens enlists tools, omitted if it enlists none.
 - [ ] No structural rules in the system_prompt (sections, format strings, "Output structure: ..." blocks). The Shape owns structure.
-- [ ] If the Lens legitimately needs more than 10 turns or 100,000 input tokens: `agent_loop:` cap overrides set.
+- [ ] If the Lens legitimately needs more than 10 turns or 200,000 input tokens: `agent_loop:` cap overrides set.
 - [ ] Test run produces structured output via `produce_output` (visible in the Loop trace tab).
 - [ ] Negative test: pass empty / off-topic input. The Lens should emit the fallback placeholders rather than ask clarifying questions.
 
