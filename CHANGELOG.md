@@ -4,6 +4,33 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.4] - 2026-05-13
+
+Planned release on top of v0.5.3's emergency patch. Three work-packages land together: a menubar Settings UI for the agent-loop caps (so operators can raise `max_iterations` / `max_input_tokens` without hand-editing `daemon.toml`), full JSON-Schema validation of `produce_output` invocations with Decision-A retry (so type mismatches surface to the model and self-correct instead of silently coercing), and a 100% CLI / MCP / GraphQL parity audit closing every operator-facing gap across the conflabd management surface. The audit added 16 new MCP tools and 6 new CLI subcommands, retired a legacy REST endpoint in favour of GraphQL, and refactored four cross-cutting code paths through Highlander helpers so the three surfaces can never drift again. 100% surface parity + real-user cold-smoke are now release gates going forward.
+
+### Added
+
+- **Menubar Settings UI for agent_loop caps.** The operator can now raise `max_iterations` and `max_input_tokens` from Conflab.app's menubar (Manage → Daemon → Agent Loop). No more hand-editing `daemon.toml`. New GraphQL mutation `setAgentLoopCaps` + query `agentLoopCaps`; new CLI `conflab daemon caps [show | set --iterations N --tokens N]`; new MCP `get_agent_loop_caps` / `set_agent_loop_caps`. Bounds: `1 ≤ max_iterations ≤ 1000`, `1_000 ≤ max_input_tokens ≤ 5_000_000`. Persists to disk and hot-reloads in-memory state — a run already in flight keeps the caps that resolved when it started; new caps apply to the next run.
+
+- **JSON-Schema validation for `produce_output` (Decision-A retry).** The agent loop's `produce_output` dispatcher now runs the model's input through a compiled JSON-Schema validator (via the `jsonschema` crate, 0.30). Both real `.shape.json` schemas and Template-synthesised schemas route through the same validator. Type mismatches now surface as `tool_result { is_error: true }` so the model can self-correct on the next turn, with an error string like `produce_output input failed schema validation: at $.summary: ... must be string; at $.action_items[0]: missing required field "owner"` (sorted by JSON pointer for stability). Malformed `.shape.json` aborts the run with a named diagnostic — no silent fallback to duck-typing.
+
+- **100% CLI / MCP / GraphQL parity across the conflabd management surface.** Operator-facing capabilities are now reachable from at least two of the three surfaces (most from all three). 16 new MCP tools, 6 new CLI subcommands. The audit is now a release gate going forward.
+
+  New CLI: `conflab plugin list`, `conflab daemon config show daemon|agents`, `conflab daemon config save daemon|agents`, `conflab daemon clear-logs`, `conflab daemon caps show|set`, `conflab model verify-key <provider>`, `conflab runs retry <id>`.
+
+  New MCP tools: `get_health`, `get_log_level`, `list_plugins`, `get_policy_config`, `add_model`, `remove_model`, `set_flab_route`, `remove_flab_route`, `set_global_policy`, `set_model_policy`, `remove_model_policy`, `verify_provider_key`, `clear_lens_stats`, `send_run_prompt`, `get_agent_loop_caps`, `set_agent_loop_caps`.
+
+  New GraphQL surfaces: `pluginSandboxProfile(name)` query (replaces the retired REST `/plugins/{name}/sandbox-profile` endpoint), `memorySearch` query, `memoryStore` mutation. `conflab daemon stop` now tries the graceful GraphQL `shutdown` mutation first (5s timeout) and falls back to `launchctl unload` on any failure.
+
+- **Total MCP tool count: 60** (was 44 in v0.5.3). The Tools Reference page lists every tool grouped by domain (Messaging, Flabs, Tasks, Memory, Lenses, Shapes, Runs, Models, Policy, Plugins, App, Daemon, Categories, Resources).
+
+### Migration notes
+
+- **No breaking changes** to the wire protocol, daemon config layout, or pre-v0.5.4 CLI verbs. All new surfaces are additive.
+- **Behaviour change for Template shapes (worth flagging):** the agent loop now rejects `{"title": 42}` against a `Body {{title}}` Template shape. Before v0.5.4 the duck-typed validator accepted it and `render_shape` silently coerced it. The new validator emits `is_error: true` with `at $.title: ... must be string`, the model retries on the next turn, and a corrected `produce_output` call is accepted normally — so most runs will self-correct without you noticing. If a lens consistently fails with `EnforceableShapeNotProduced` on Haiku where it didn't before, try Opus / Sonnet.
+- **Malformed `.shape.json` files** now fail the run with a clear diagnostic naming the offending shape. Fix the schema and retry.
+- **REST endpoint retired:** `/plugins/{name}/sandbox-profile` is gone; use the GraphQL `pluginSandboxProfile(name)` query (or `conflab plugin inspect <name>` which now uses it under the hood). No user-facing impact unless you were calling the REST endpoint directly from a script.
+
 ## [0.5.3] - 2026-05-12
 
 Emergency patch on top of v0.5.2. The Launcher Run flow broke under real-user testing within minutes of the v0.5.2 ship; v0.5.3 closes seven bugs in one go. End-to-end after v0.5.3: drop two `.md` meeting transcripts onto a `texteditor+files` variable, click Run, watch Haiku complete in two turns (221k input -> 2.2k output) and Opus complete in two turns (298k input -> 2.8k output), see real structured output. Plus three new daemon INFO lines so a run reads as a lifecycle thread instead of a silent-then-done event.
