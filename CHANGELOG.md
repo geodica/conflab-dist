@@ -4,6 +4,28 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.5] - 2026-05-15
+
+Pre-launch hardening release on top of v0.5.4's parity-audit work. Three steel threads land together: a public two-stage opt-in waitlist (`/waitlist`) with admin-side admission, a 14-index DB audit across eight tables (sized for real-user load), and a project-wide migration of 74 datetime columns from `timestamp without time zone` to `timestamptz` (closing the BST cast-shift class of bugs by construction). Plus an in-session diversion: a superadmin-only role-edit dropdown at `/app/admin/users` that closes a privilege-escalation gap in the existing `:admin_update` Ash action. Five new migrations apply server-side on `scripts/deploy`. No conflab CLI / daemon wire-protocol changes.
+
+### Added
+
+- **Public waitlist (ST0115).** `/waitlist` is now live -- prospective users join via email confirmation; admins admit confirmed entries from `/app/admin/waitlist`. Admitted emails get a magic-link that bypasses the registration gate. Five-state lifecycle (`unconfirmed` -> `confirmed` -> `admitted`, plus `cancelled` + re-join). Per-IP rate limiting on join POSTs.
+
+- **Database index audit (ST0116).** 14 new indexes across 8 tables sized for real-user load: admin UsersLive sort/filter, waitlist queue + confirm, API key recency, catalog browse (incl. GIN on tags), notification bell, agent stack decay, chat participant lookups. Four migrations; concurrently-safe where the table is or will grow.
+
+- **Timestamp timezone migration (ST0117).** 74 datetime columns across 31 tables migrated from `timestamp without time zone` to `timestamptz`. Schema is now timezone-correct independent of session-TZ configuration, closing the BST cast-shift class of bugs by construction.
+
+- **Superadmin role-edit dropdown.** `/app/admin/users` renders a role-select dropdown for superadmin viewers (badge-only for admin viewers), with a 2-step confirm via the canonical `ConfirmAction` component. New `:update_role` Ash action gated by superadmin-only policy.
+
+- **Plans page polish.** `/app/plans` shows `£TBC` for paid tiers (Free stays at `£0`), with a "Paid plans coming soon" notice + `mailto:plans@conflab.space`. Per-card lens/theme counts are now correct.
+
+### Migration notes
+
+- **Behaviour change worth flagging: admins can no longer set roles.** Only superadmin (via the new `update_role` action) can change a user's role. The previous `:admin_update` action no longer accepts a `:role` field -- this closes a privilege-escalation gap. The `Verified publisher` toggle on UsersLive is unaffected.
+- **Server-side: `scripts/deploy` applies five new migrations** (4x index migrations -- 3 use `CONCURRENTLY` -- plus 1 timestamptz column migration).
+- **No breaking changes for clients on v0.5.4.** Lens / shape / run semantics unchanged.
+
 ## [0.5.4] - 2026-05-13
 
 Planned release on top of v0.5.3's emergency patch. Three work-packages land together: a menubar Settings UI for the agent-loop caps (so operators can raise `max_iterations` / `max_input_tokens` without hand-editing `daemon.toml`), full JSON-Schema validation of `produce_output` invocations with Decision-A retry (so type mismatches surface to the model and self-correct instead of silently coercing), and a 100% CLI / MCP / GraphQL parity audit closing every operator-facing gap across the conflabd management surface. The audit added 16 new MCP tools and 6 new CLI subcommands, retired a legacy REST endpoint in favour of GraphQL, and refactored four cross-cutting code paths through Highlander helpers so the three surfaces can never drift again. 100% surface parity + real-user cold-smoke are now release gates going forward.
