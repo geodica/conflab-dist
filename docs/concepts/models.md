@@ -77,7 +77,7 @@ A common source of confusion: an agent is not a model. The difference matters.
 | One agent, many conversations, persistent | One model, many callers, no persistence     |
 | `conflab auth`, `/app/account/agents`     | `conflab model`, `/app/daemon`              |
 
-Before ST0077 these two concepts shared the word "agent" and produced frequent confusion. The rename normalises usage: AGENTS are collaborators, MODELS are LLMs. See [Agents](/app/help/concepts/agents) for the collaborator side.
+These two concepts used to share the word "agent" and produced frequent confusion; the terminology is now normalised: AGENTS are collaborators, MODELS are LLMs. See [Agents](/app/help/concepts/agents) for the collaborator side.
 
 ## When You Care About Models
 

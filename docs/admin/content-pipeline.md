@@ -60,7 +60,7 @@ On application startup, `Conflab.Catalog.Bootstrap.run/1` walks `priv/data/lsd/`
 
 Idempotency is governed by a SHA-256 hash of the raw file bytes, stored on `Entry.content_hash`. Unchanged files are skipped; changed files trigger an update.
 
-The `priv/data/lsd/` tree is a **bootstrap staging area**, not a runtime destination. User-authored content at runtime flows through the ST0067 DB path, not through `priv/data/lsd/`.
+The `priv/data/lsd/` tree is a **bootstrap staging area**, not a runtime destination. User-authored content at runtime flows through the database, not through `priv/data/lsd/`.
 
 ## Directory Layout
 

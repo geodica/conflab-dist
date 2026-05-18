@@ -4,6 +4,36 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6] - 2026-05-18
+
+Hotfix release closing eight defects in the install / onboarding / agent-identity pipeline surfaced by a real returning-user cold-smoke of v0.5.5. All eight WPs of ST0118 land in this patch. No wire-protocol changes; no behavioural changes for first-install users on a fresh account.
+
+### Fixed
+
+- **WP-01 -- Setup wizard pre-fills handle from server-side agents.** macOS Setup wizard now fetches `listOwnedAgents` after sign-in and drives the Agent step from the result: 0 owned -> hostname-derived suggestion (existing behaviour), 1 owned -> pre-fill + "Re-using your existing agent" note, 2+ owned -> radio picker + "Register new" option. Also fixes a latent bug where `.agent` was never rendered after sign-in (the wizard jumped straight to `.models`).
+
+- **WP-02 -- Quota-exceeded fallback with existing-handle picker.** `cycle_daemon_token_live` quota_exceeded redirect now carries `existing_handles=A,B,C` in the loopback URL and lists the owner's handles inline in the detail. The Rust loopback captures the list in `LoopbackOutcome::CycleError`; the CLI appends a `[conflab-error: ...]` machine-readable tag to its Err string; the macOS wizard's `showFailure` parses the tag and routes back to `.agent` (with the picker pre-populated) instead of `.connect` (which would force a needless re-auth).
+
+- **WP-03 -- Daemon error names both recovery paths.** `validate_handle_identity` in the daemon used to recommend `conflab daemon token cycle --agent <handle>` for any mismatch. If the handle wasn't yet registered server-side, that command could itself fail with quota_exceeded. The new diagnostic acknowledges both sub-cases: agent owned by a different user (token-cycle) and agent not yet registered (Setup wizard / `conflab install setup --interactive`). Points to `conflab agent list` for discovery.
+
+- **WP-04 -- Website agent-delete walks participant rows.** `/app/account/agents/<id>` Delete used to raise an Ecto FK constraint when the agent had any `participants` rows -- and the LiveView swallowed the actual reason into a generic "Failed to delete agent." flash. `Conflab.Accounts.destroy_agent` now sweeps every Participant referencing the agent before the user delete (admin-context, `authorize?: false`). The LV now surfaces the underlying reason in the flash + logs it.
+
+- **WP-06 -- DoneStepView drops the hardcoded "CONFLAB" fallback.** Pre-WP-06 the "All set" view silently substituted the literal string `"CONFLAB"` when `bundle.agentHandle` was missing -- which happens to be a real registered agent, making the bug both invisible and dangerously plausible. `DoneStepView.init` is now non-optional with a `precondition(!handle.isEmpty)`. The wizard's `apply()` re-reads `daemon.toml [daemon].handle` after apply so the display is always the canonical post-apply value.
+
+- **WP-07 -- daemon doctor "Connected flabs" is informational on zero.** A fresh install with zero flab memberships is the expected state, not a failure. The doctor now renders the empty case as an `i` (informational) row that doesn't count toward `failures`. New `util::info` helper added for any future expected-empty rows.
+
+### Added
+
+- **WP-08 -- Install-path parity audit.** New "Appendix A: Install-Path Parity Audit" in `priv/docs/getting-started/installation-guide.md` -- side-by-side matrix of the three macOS install paths (.pkg / brew / curl-shell) for files written, LaunchAgent state, CA Trust, shell-rc changes, keychain entries. Plus the 3x3 cross-install upgrade matrix. Single Highlander end-state spec that all three paths conform to.
+
+### Process
+
+- **WP-05 -- Cold-smoke gate tightening.** Memory rule `feedback_real_user_cold_smoke` now requires a returning-user-reinstall scenario (real prod test account + at least one owned agent, uninstall --nuke-data + reinstall, wizard pre-fills, daemon binds, doctor green) as a pre-tag gate. This is the scenario that surfaced all eight ST0118 defects in v0.5.5 within minutes of real-user testing.
+
+### Migration notes
+
+- No schema changes. No new database migrations. No CLI / daemon / macOS-app wire-protocol changes. Existing v0.5.5 installs continue to function; new behaviour kicks in only on Setup wizard re-run or fresh install.
+
 ## [0.5.5] - 2026-05-15
 
 Pre-launch hardening release on top of v0.5.4's parity-audit work. Three steel threads land together: a public two-stage opt-in waitlist (`/waitlist`) with admin-side admission, a 14-index DB audit across eight tables (sized for real-user load), and a project-wide migration of 74 datetime columns from `timestamp without time zone` to `timestamptz` (closing the BST cast-shift class of bugs by construction). Plus an in-session diversion: a superadmin-only role-edit dropdown at `/app/admin/users` that closes a privilege-escalation gap in the existing `:admin_update` Ash action. Five new migrations apply server-side on `scripts/deploy`. No conflab CLI / daemon wire-protocol changes.

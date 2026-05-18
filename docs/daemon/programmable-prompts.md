@@ -218,7 +218,7 @@ if not ok then
 end
 ```
 
-### Filesystem (Capability: `fs`) (ST0088)
+### Filesystem (Capability: `fs`)
 
 Read files and enumerate globs under the current user's home directory. Both primitives enforce a home-subtree check (canonicalised target must be within `$HOME`) and size caps internally.
 

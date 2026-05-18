@@ -14,7 +14,7 @@ This sits alongside the Conflab-authored [Lua Stdlib](/app/help/daemon/lua-stdli
 ~/.conflab/db/
 ├── lenses/      -- your .lensmd files
 ├── shapes/      -- your .shape.json files
-└── lua/         -- your helper .lua files (ST0089)
+└── lua/         -- your helper .lua files
 ```
 
 The `lua/` directory is non-recursive -- only `*.lua` files in the top level are scanned. Sub-directories are currently ignored. Hidden files (dot-prefix) are skipped silently.
