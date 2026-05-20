@@ -57,10 +57,10 @@ The full format reference lives in [Prompt Templates](/app/help/daemon/templates
 
 There are two kinds of Lens locations:
 
-- **Local Lenses** in `~/.conflab/prompts/`. Used by the daemon as prompt templates. Available to the owner. Not published to the Catalog.
+- **Local Lenses** in `~/.conflab/db/lenses/`. Used by the daemon as prompt templates. Available to the owner. Not published to the Catalog.
 - **Catalog Lenses** in the Conflab Catalog. Published, moderated, and browsable by others. Authored by users and crawled from public sources. See [The Catalog](/app/help/concepts/catalog).
 
-A local Lens can be published to the Catalog via `conflab lens save`. A Catalog Lens can be forked and downloaded to the local tree for customisation.
+A local Lens is saved with `conflab lens save` and published to the Catalog with `conflab lens publish`. A Catalog Lens can be forked and downloaded to the local tree for customisation.
 
 ## Running a Lens
 

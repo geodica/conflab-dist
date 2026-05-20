@@ -145,9 +145,32 @@ conflab daemon log-level "info,rmcp=error"      # custom per-module filter
 
 The filter uses `tracing_subscriber::EnvFilter` directive syntax.
 
+## Lifecycle and LaunchAgent
+
+On macOS, conflabd runs as a launchd background service. The LaunchAgent plist (`~/Library/LaunchAgents/space.conflab.daemon.plist`) is conditional: it restarts the daemon on real crashes (SIGSEGV-class faults) and on non-zero exits, but **not** on a clean zero exit. The daemon uses the zero-exit signal to indicate "this is a permanent configuration error, do not retry."
+
+You will see this behaviour in two situations:
+
+- **Transient failures** (`conflabc unreachable, network drop`) -- the daemon exits with `FATAL_RETRY` in the log and launchd respawns it after a 10-second throttle.
+- **Permanent failures** (identity mismatch, missing handle, malformed config) -- the daemon exits with `FATAL_NO_RETRY` in the log and stays down. No restart loop. Run `conflab daemon logs` to see the marker and `conflab daemon doctor` for diagnosis.
+
+This is a deliberate design: previously a misconfigured daemon would respawn five or more times in under a minute, burying the diagnostic in repeated startup noise. Now the failure surfaces once with a clear marker, and the LaunchAgent waits for human intervention.
+
+## Binding and Environment Switching
+
+`daemon.toml` binds the daemon to one Conflab server at a time. To rebind to a different environment (eg flipping between localhost development and `https://conflab.space`) use:
+
+```bash
+conflab daemon switch <env>
+```
+
+The command auto-resolves the agent profile, regenerates `daemon.toml`, restarts the daemon, and auto-rolls back if the post-switch `daemon doctor` fails. The macOS menubar app's **Settings → Flabs** tab exposes the same flow through the **Switch** button on each non-active environment row. See [Authentication](/app/help/cli/authentication) for the prerequisites and walkthrough.
+
+`conflab daemon doctor` includes a **Profile alignment** check that warns (yellow, not failing) when `daemon.toml`'s server URL does not match the active CLI profile's URL -- a common symptom of forgetting to switch after creating a new profile.
+
 ## Prompt Templates
 
-conflabd serves prompt templates from `~/.conflab/prompts/`. Templates are `.lensmd` files -- Markdown with optional YAML frontmatter and `{{variable}}` interpolation. See [Prompt Templates](/app/help/daemon/templates) for the full format reference and [Lenses](/app/help/concepts/lenses) for the concept.
+conflabd serves prompt templates from `~/.conflab/db/lenses/`. Templates are `.lensmd` files -- Markdown with optional YAML frontmatter and `{{variable}}` interpolation. See [Prompt Templates](/app/help/daemon/templates) for the full format reference and [Lenses](/app/help/concepts/lenses) for the concept.
 
 The template management API is reachable through MCP tools and the CLI. Common operations:
 

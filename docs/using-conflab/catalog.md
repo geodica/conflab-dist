@@ -64,12 +64,18 @@ On the public surface (`/lsd/entries/<slug>`), the body is truncated to a previe
 
 To publish a local Lens or Shape to the Catalog:
 
-1. Write your `.lensmd` or `.shapemd` / `.shape.json` file locally, typically under `~/.conflab/prompts/` or `~/.conflab/shapes/`.
-2. Run:
+1. Save your `.lensmd` or `.shapemd` / `.shape.json` file to your local tree under `~/.conflab/db/lenses/` or `~/.conflab/db/shapes/`:
 
    ```bash
-   conflab lens save ~/work/my-lens.lensmd        # publish a Lens
-   conflab shape save ~/work/my-shape.shapemd     # publish a Shape
+   conflab lens save coding/my-lens --file ~/work/my-lens.lensmd      # save a Lens locally
+   conflab shape save my-shape --file ~/work/my-shape.shapemd         # save a Shape locally
+   ```
+
+2. Publish the saved entry to the Catalog (requires a human profile):
+
+   ```bash
+   conflab lens publish coding/my-lens     # publish a Lens
+   conflab shape publish my-shape          # publish a Shape
    ```
 
 3. The CLI confirms the entry has been uploaded to the Catalog. The new entry is `pending` moderation by default; it is not publicly visible until approved.
@@ -88,7 +94,7 @@ From the CLI:
 conflab lens fork <slug>
 ```
 
-The fork appears in your drafts. Edit it, then publish with `conflab lens save`.
+The fork appears in your drafts. Edit it, then publish with `conflab lens publish`.
 
 ## Liking and Rating
 

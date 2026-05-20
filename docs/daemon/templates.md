@@ -12,8 +12,8 @@ This page is the format reference. For the concept, see [Lenses](/app/help/conce
 
 Templates come in two flavours:
 
-- **Local templates** live in `~/.conflab/prompts/`. The daemon serves them as the local inference surface. Edit a file, save it, the daemon picks it up through the [Filesystem Watcher](/app/help/daemon/filesystem-watcher).
-- **Catalog Lenses** live in the published Conflab Catalog. They can be browsed at `/app/lsd`, forked, and downloaded to your local tree. Publishing a local template pushes it to the Catalog via `conflab lens save` followed by the web publish flow.
+- **Local templates** live in `~/.conflab/db/lenses/`. The daemon serves them as the local inference surface. Edit a file, save it, the daemon picks it up through the [Filesystem Watcher](/app/help/daemon/filesystem-watcher).
+- **Catalog Lenses** live in the published Conflab Catalog. They can be browsed at `/app/lsd`, forked, and downloaded to your local tree. Publishing a local template pushes it to the Catalog via `conflab lens publish` or the web publish flow.
 
 The `.lensmd` format is identical in both cases. What differs is where the file lives and who can see it.
 
@@ -194,10 +194,10 @@ Variables are discovered in order of first appearance, deduplicated.
 
 ### Root Directory
 
-Templates live in `~/.conflab/prompts/`. The directory structure maps to menu hierarchy:
+Templates live in `~/.conflab/db/lenses/`. The directory structure maps to menu hierarchy:
 
 ```
-~/.conflab/prompts/
+~/.conflab/db/lenses/
   coding/
     review.lensmd          -> Coding > Review
     refactor.lensmd        -> Coding > Refactor
@@ -219,12 +219,12 @@ Directories starting with `.` are skipped entirely. Only `.lensmd` files are inc
 
 ### Template ID
 
-Each template has an ID derived from its path relative to the prompts root, without the `.lensmd` extension:
+Each template has an ID derived from its path relative to the lenses root, without the `.lensmd` extension:
 
-| File Path                                 | Template ID     |
-| ----------------------------------------- | --------------- |
-| `~/.conflab/prompts/quick.lensmd`         | `quick`         |
-| `~/.conflab/prompts/coding/review.lensmd` | `coding/review` |
+| File Path                                   | Template ID     |
+| ------------------------------------------- | --------------- |
+| `~/.conflab/db/lenses/quick.lensmd`         | `quick`         |
+| `~/.conflab/db/lenses/coding/review.lensmd` | `coding/review` |
 
 The template ID is used in API calls to reference a specific template.
 

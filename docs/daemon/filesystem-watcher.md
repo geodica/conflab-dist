@@ -10,9 +10,9 @@ conflabd watches `~/.conflab/` for changes to Lens and Shape files so the local 
 
 The watcher monitors:
 
-- `~/.conflab/prompts/**/*.lensmd` -- [Lens](/app/help/concepts/lenses) files.
-- `~/.conflab/shapes/**/*.shapemd` -- Markdown [Shape](/app/help/concepts/shapes) files.
-- `~/.conflab/shapes/**/*.shape.json` -- JSON Schema Shapes.
+- `~/.conflab/db/lenses/**/*.lensmd` -- [Lens](/app/help/concepts/lenses) files.
+- `~/.conflab/db/shapes/**/*.shapemd` -- Markdown [Shape](/app/help/concepts/shapes) files.
+- `~/.conflab/db/shapes/**/*.shape.json` -- JSON Schema Shapes.
 
 Files outside these trees are ignored. Hidden directories (starting with `.`) are skipped entirely.
 
@@ -52,7 +52,7 @@ Incremental re-sync compares content hashes and skips unchanged files. Force re-
 The filesystem watcher operates on your local files. Published Catalog entries live in the server-side Ash catalog DB. The two are distinct:
 
 - Local edits update the SQLite index instantly.
-- Publishing a Lens (`conflab lens save` followed by `lens publish`, or the web UI) pushes it to the Catalog DB.
+- Saving a Lens (`conflab lens save`) writes it to your local tree; publishing it (`conflab lens publish`, or the web UI) pushes it to the Catalog DB.
 - Browsing a Catalog entry does not touch your local files until you fork or download it.
 
 See [The Catalog](/app/help/concepts/catalog) for the three-layer storage architecture.

@@ -84,8 +84,8 @@ A Lens that references this Shape is expected to return valid JSON matching the 
 
 Shapes live alongside Lenses:
 
-- **Local Shapes** in `~/.conflab/shapes/`.
-- **Catalog Shapes** in the Conflab Catalog, browsable on the Shapes tab of `/app/lsd` and publishable via `conflab shape save`.
+- **Local Shapes** in `~/.conflab/db/shapes/`, saved with `conflab shape save`.
+- **Catalog Shapes** in the Conflab Catalog, browsable on the Shapes tab of `/app/lsd` and publishable via `conflab shape publish`.
 
 A Lens can reference a local Shape by relative path, or a Catalog Shape by slug.
 

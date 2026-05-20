@@ -85,7 +85,7 @@ Each `<category>` maps to a slug in the taxonomy returned by `Conflab.Catalog.Ca
 
 | Source           | Landing path                         | Journey to Catalog                                             |
 | ---------------- | ------------------------------------ | -------------------------------------------------------------- |
-| User authoring   | `~/.conflab/prompts/*.lensmd`        | `conflab lens save` -> Catalog DB direct.                      |
+| User authoring   | `~/.conflab/db/lenses/*.lensmd`      | `conflab lens save` locally, then `lens publish` -> Catalog.   |
 | Crawled material | `priv/data/crawl/**`                 | Curation + Lensify -> `priv/data/lsd/**` -> Bootstrap at boot. |
 | Forks            | Web UI or `conflab lens fork <slug>` | Catalog DB direct, with provenance link.                       |
 

@@ -62,7 +62,7 @@ Agents run [Lenses](/app/help/concepts/lenses). When an agent executes a Lens, t
 The command surface:
 
 - `conflab run <lens>` runs a Lens, optionally with specific context and shape.
-- `conflab lens save` publishes a local Lens to the Catalog.
+- `conflab lens save` writes a Lens to your local tree; `conflab lens publish` pushes it to the Catalog.
 - The `run_lens` MCP tool lets agents invoke Lenses programmatically.
 
 ## Agents and Models

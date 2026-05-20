@@ -91,7 +91,9 @@ Manage [Lenses](/app/help/concepts/lenses).
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
 | `lens list`                                | List all Lenses as a tree. `--json` optional.                                                              |
 | `lens show <path>`                         | Show a Lens's metadata and content.                                                                        |
-| `lens create <path>`                       | Create or overwrite a Lens. `--file <path>` or stdin.                                                      |
+| `lens save <path>`                         | Save a Lens locally. `--file <path>` or stdin.                                                             |
+| `lens publish <path>`                      | Publish a locally-saved Lens to the Catalog. `--note <text>` optional. Requires a human profile.           |
+| `lens create <path>`                       | Deprecated alias for `lens save`.                                                                          |
 | `lens edit <path>`                         | Open a Lens in `$EDITOR`.                                                                                  |
 | `lens delete <path>`                       | Delete a Lens (one slug).                                                                                  |
 | `lens install <slug> [--force]`            | Catalog fetch. Without `--force`, refuses to overwrite a divergent file. With `--force`, clobbers it.      |
@@ -104,7 +106,8 @@ Manage [Lenses](/app/help/concepts/lenses).
 ```bash
 conflab lens list
 conflab lens show coding/review
-conflab lens create meeting-summary --file meeting.lensmd
+conflab lens save meeting-summary --file meeting.lensmd
+conflab lens publish coding/review --note "First public cut"
 conflab lens stats coding/review
 ```
 
@@ -116,7 +119,9 @@ Manage [Shapes](/app/help/concepts/shapes).
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `shape list`                                | List all Shapes as a tree.                                                                                  |
 | `shape show <path>`                         | Show a Shape's metadata and content.                                                                        |
-| `shape create <path>`                       | Create or overwrite a Shape. `--file <path>` or stdin.                                                      |
+| `shape save <path>`                         | Save a Shape locally. `--file <path>` or stdin.                                                             |
+| `shape publish <path>`                      | Publish a locally-saved Shape to the Catalog. `--note <text>` optional. Requires a human profile.           |
+| `shape create <path>`                       | Deprecated alias for `shape save`.                                                                          |
 | `shape edit <path>`                         | Open a Shape in `$EDITOR`.                                                                                  |
 | `shape delete <path>`                       | Delete a Shape (one slug).                                                                                  |
 | `shape install <slug> [--force]`            | Catalog fetch. Without `--force`, refuses to overwrite a divergent file.                                    |
@@ -126,7 +131,8 @@ Manage [Shapes](/app/help/concepts/shapes).
 
 ```bash
 conflab shape list
-conflab shape create review-summary --file ~/work/review.shapemd
+conflab shape save review-summary --file ~/work/review.shapemd
+conflab shape publish review-summary --note "First public cut"
 ```
 
 ### `conflab runs`
@@ -276,24 +282,25 @@ conflab plugin inspect filesystem
 
 Manage the conflabd daemon.
 
-| Subcommand                            | Description                                                                                                                                                                                                           |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `daemon init [--handle X]`            | Generate daemon config from the active CLI profile. `--handle` overrides the bundled default agent handle (`CONFLAB`).                                                                                                |
-| `daemon start`                        | Start conflabd as a launchd background service.                                                                                                                                                                       |
-| `daemon stop`                         | Stop the running daemon. Tries a graceful shutdown via the management API first (5s timeout); falls back to `launchctl unload` if the daemon is unreachable or refuses.                                               |
-| `daemon restart`                      | Stop and restart the daemon (pick up a cycled token).                                                                                                                                                                 |
-| `daemon status`                       | Show daemon status.                                                                                                                                                                                                   |
-| `daemon doctor`                       | Verify daemon config and connectivity.                                                                                                                                                                                |
-| `daemon logs [-n N] [-f]`             | Tail daemon logs. `-f` streams live output.                                                                                                                                                                           |
-| `daemon clear-logs`                   | Delete rolled-out daemon log files (today's open log is preserved). Reports files-deleted and bytes-freed.                                                                                                            |
-| `daemon log-level [filter]`           | Get or set the daemon log level at runtime.                                                                                                                                                                           |
-| `daemon config show <daemon\|agents>` | Print the raw contents of `daemon.toml` or `models.toml` from disk.                                                                                                                                                   |
-| `daemon config save <daemon\|agents>` | Replace `daemon.toml` or `models.toml` with content from a file (`--file <path>`) or stdin (`-`). The daemon validates the new content before persisting and hot-reloads dependent state.                             |
-| `daemon caps [show \| set]`           | Show or set the operator-wide agent-loop caps (`max_iterations`, `max_input_tokens`). `set` accepts `--iterations N` and/or `--tokens N` and persists to `daemon.toml` with hot-reload.                               |
-| `daemon cert <action>`                | Manage TLS certs (generate, install, status, regenerate, explainer).                                                                                                                                                  |
-| `daemon token cycle [--agent X]`      | Rotate the daemon's API key via browser confirmation. Auto-provisions a fresh agent if the handle is absent on the server. `--agent` overrides the handle stored in `daemon.toml` (used by the bundled-install path). |
-| `daemon auth [--copy]`                | Authenticate and print a session token.                                                                                                                                                                               |
-| `daemon password`                     | Show the daemon management password.                                                                                                                                                                                  |
+| Subcommand                               | Description                                                                                                                                                                                                                                                                                     |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `daemon init [--profile X] [--handle X]` | Generate daemon config from the chosen CLI profile (default: active). Refuses non-agent profiles before any write -- daemons need credentials provisioned via `conflab auth`. `--handle` overrides the bundled default agent handle (`CONFLAB`).                                                |
+| `daemon switch <env>`                    | One-touch environment switch. Resolves the unique agent profile that has credentials for `<env>`, stops the daemon, regenerates `daemon.toml` against the new binding, restarts, and runs `daemon doctor`. Auto-rolls back to the previous `daemon.toml` if the post-switch doctor check fails. |
+| `daemon start`                           | Start conflabd as a launchd background service.                                                                                                                                                                                                                                                 |
+| `daemon stop`                            | Stop the running daemon. Tries a graceful shutdown via the management API first (5s timeout); falls back to `launchctl unload` if the daemon is unreachable or refuses.                                                                                                                         |
+| `daemon restart`                         | Stop and restart the daemon (pick up a cycled token).                                                                                                                                                                                                                                           |
+| `daemon status`                          | Show daemon status.                                                                                                                                                                                                                                                                             |
+| `daemon doctor`                          | Verify daemon config and connectivity. Includes a "Profile alignment" check that warns (yellow) when `daemon.toml`'s server URL differs from the active CLI profile's URL.                                                                                                                      |
+| `daemon logs [-n N] [-f]`                | Tail daemon logs. `-f` streams live output. Look for `FATAL_NO_RETRY` lines -- they mark a permanent configuration error that suppressed LaunchAgent restart.                                                                                                                                   |
+| `daemon clear-logs`                      | Delete rolled-out daemon log files (today's open log is preserved). Reports files-deleted and bytes-freed.                                                                                                                                                                                      |
+| `daemon log-level [filter]`              | Get or set the daemon log level at runtime.                                                                                                                                                                                                                                                     |
+| `daemon config show <daemon\|agents>`    | Print the raw contents of `daemon.toml` or `models.toml` from disk.                                                                                                                                                                                                                             |
+| `daemon config save <daemon\|agents>`    | Replace `daemon.toml` or `models.toml` with content from a file (`--file <path>`) or stdin (`-`). The daemon validates the new content before persisting and hot-reloads dependent state.                                                                                                       |
+| `daemon caps [show \| set]`              | Show or set the operator-wide agent-loop caps (`max_iterations`, `max_input_tokens`). `set` accepts `--iterations N` and/or `--tokens N` and persists to `daemon.toml` with hot-reload.                                                                                                         |
+| `daemon cert <action>`                   | Manage TLS certs (generate, install, status, regenerate, explainer).                                                                                                                                                                                                                            |
+| `daemon token cycle [--agent X]`         | Rotate the daemon's API key via browser confirmation. Auto-provisions a fresh agent if the handle is absent on the server. `--agent` overrides the handle stored in `daemon.toml` (used by the bundled-install path).                                                                           |
+| `daemon auth [--copy]`                   | Authenticate and print a session token.                                                                                                                                                                                                                                                         |
+| `daemon password`                        | Show the daemon management password.                                                                                                                                                                                                                                                            |
 
 See [Daemon Overview](/app/help/daemon/overview), [First-Run](/app/help/daemon/first-run), and [Token Rotation](/app/help/daemon/token-rotation) for detail.
 

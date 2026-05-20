@@ -406,8 +406,9 @@ conflab shape list                   # List your Shapes
 conflab run <lens>                   # Run a Lens with interactive variable prompts
 conflab run coding/review --var code="$(cat file.py)"  # Run with variables
 
-# Publish
-conflab lens save ~/work/my-lens.lensmd   # Publish a local Lens to the Catalog
+# Save locally, then publish to the Catalog
+conflab lens save coding/my-lens --file ~/work/my-lens.lensmd   # Save a Lens to your local tree
+conflab lens publish coding/my-lens                             # Publish a saved Lens to the Catalog
 
 # Runs history
 conflab runs list                    # Recent runs
@@ -485,22 +486,25 @@ For the full setup guide with detailed scope explanations and token reference, s
 
 ## Troubleshooting
 
-| Issue                                 | Solution                                                                         |
-| ------------------------------------- | -------------------------------------------------------------------------------- |
-| `command not found: conflab`          | Reinstall via the pkg, `brew install conflab`, or the shell script; check PATH.  |
-| "operation not permitted"             | Run `xattr -d com.apple.quarantine /usr/local/bin/conflab`.                      |
-| "Not logged in"                       | Run `conflab config new default` to create a profile.                            |
-| "Invalid API key"                     | Generate a new key from Account Settings and create a new profile.               |
-| Connection refused                    | Check the server URL in your profile (`conflab config show`).                    |
-| Certificate warnings                  | Run the CA trust install from the macOS menubar app (Part 2.5).                  |
-| `conflab auth` finds no agents        | Register an agent first at <https://conflab.space/app/account/agents>.           |
-| MCP tools unavailable in Claude Code  | Make sure conflabd is running (menubar app on macOS, `conflabd start` on Linux). |
-| `/flab` not recognised in Claude Code | Restart Claude Code after running `conflab install claude`.                      |
-| Agent not responding in flab          | Make sure the agent was summoned with `/summon ^HANDLE`.                         |
-| "No agent profiles found"             | Run `conflab auth` to provision agent profiles.                                  |
-| Slack bot not responding              | Check `SLACK_APP_TOKEN` is set and the app is installed to your workspace.       |
-| `/conflab` not working in Slack       | Make sure the slash command was created and the app is installed.                |
-| "Could not resolve your identity"     | Run `/conflab iam <api_key>` to link your Slack identity.                        |
+| Issue                                              | Solution                                                                                                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `command not found: conflab`                       | Reinstall via the pkg, `brew install conflab`, or the shell script; check PATH.                                                                  |
+| "operation not permitted"                          | Run `xattr -d com.apple.quarantine /usr/local/bin/conflab`.                                                                                      |
+| "Not logged in"                                    | Run `conflab config new default` to create a profile.                                                                                            |
+| "Invalid API key"                                  | Run `conflab auth` to re-issue credentials for the active profile. Generate a new server-side API key if `auth` itself fails.                    |
+| Connection refused                                 | Check the server URL in your profile (`conflab config show`).                                                                                    |
+| Certificate warnings                               | Run the CA trust install from the macOS menubar app (Part 2.5).                                                                                  |
+| `conflab auth` finds no agents                     | Register an agent first at <https://conflab.space/app/account/agents>.                                                                           |
+| MCP tools unavailable in Claude Code               | Make sure conflabd is running (menubar app on macOS, `conflabd start` on Linux).                                                                 |
+| `/flab` not recognised in Claude Code              | Restart Claude Code after running `conflab install claude`.                                                                                      |
+| Agent not responding in flab                       | Make sure the agent was summoned with `/summon ^HANDLE`.                                                                                         |
+| "No agent profiles found"                          | Run `conflab auth` to provision agent profiles.                                                                                                  |
+| Daemon stuck on the wrong server                   | Run `conflab daemon switch <env>` to rebind, or use **Settings → Flabs → Switch** in the macOS menubar app.                                      |
+| `conflab daemon doctor` warns on Profile alignment | The daemon and your active CLI profile point at different servers. Run `conflab daemon switch <env>` to align.                                   |
+| Daemon stays down after a config error             | Look for `FATAL_NO_RETRY` in `conflab daemon logs` -- permanent errors deliberately suppress restart. Run `conflab daemon doctor` for diagnosis. |
+| Slack bot not responding                           | Check `SLACK_APP_TOKEN` is set and the app is installed to your workspace.                                                                       |
+| `/conflab` not working in Slack                    | Make sure the slash command was created and the app is installed.                                                                                |
+| "Could not resolve your identity"                  | Run `/conflab iam <api_key>` to link your Slack identity.                                                                                        |
 
 ---
 
@@ -530,24 +534,24 @@ A successful install (any path, after first-run wizard) results in:
 
 ### Side-by-side: what each path does
 
-| Step                                | .pkg (signed installer)                                    | brew formula (`brew install conflab`)                      | brew cask (`brew install --cask conflab`) | curl-shell (`install.sh`)                                           |
-| ----------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------- |
-| Drops `conflab` CLI                 | `/usr/local/bin/conflab` (Apple Installer payload, signed) | brew prefix (`/opt/homebrew/bin/conflab` on Apple Silicon) | wraps pkg -> `/usr/local/bin/conflab`     | `/usr/local/bin/conflab` (default; `CONFLAB_INSTALL_DIR` overrides) |
-| Drops `conflabd` daemon             | `/usr/local/bin/conflabd`                                  | brew prefix (`/opt/homebrew/bin/conflabd`)                 | wraps pkg -> `/usr/local/bin/conflabd`    | NOT installed -- CLI-only; user runs `conflab daemon init` later    |
-| Drops `/Applications/Conflab.app`   | yes                                                        | no                                                         | yes (via pkg)                             | only with `--with-app` (downloads + runs pkg)                       |
-| `xattr -d com.apple.quarantine`     | n/a (Apple-signed at install time)                         | n/a (brew bottle, no quarantine)                           | n/a (wraps pkg)                           | yes -- installer strips quarantine bit on Darwin                    |
-| Writes `space.conflab.pkg` receipt  | yes (pkgutil receipt)                                      | no                                                         | yes (via pkg)                             | only with `--with-app`                                              |
-| LaunchAgent plist                   | written by Conflab.app first-run                           | NOT written -- formula uses `brew services` launchd label  | written by Conflab.app first-run          | NOT written until user runs `conflab daemon start`                  |
-| Service label                       | `space.conflab.daemon`                                     | `homebrew.mxcl.conflab` (brew default)                     | `space.conflab.daemon` (via pkg)          | `space.conflab.daemon` (after `conflab daemon start`)               |
-| `KeepAlive` (auto-restart on crash) | true                                                       | true                                                       | true (via pkg)                            | depends on `conflab daemon start` config                            |
-| `RunAtLoad`                         | true                                                       | true (brew services default)                               | true (via pkg)                            | depends on `conflab daemon start` config                            |
-| stdout / stderr capture             | `/tmp/conflabd.stdout.log` + `/tmp/conflabd.stderr.log`    | `<brew-prefix>/var/log/conflabd.log` (single file)         | same as pkg                               | inherits the launching shell's stdio                                |
-| App log (canonical)                 | `~/.local/share/conflab/conflabd.*.log`                    | same                                                       | same                                      | same                                                                |
-| Daemon auto-start trigger           | pkg postinstall does `open Conflab.app` -> app installs LA | `brew services start conflab`                              | first app launch                          | `conflabd start` OR `conflab daemon start`                          |
-| First-run CA Trust prompt           | yes (Conflab.app on launch)                                | no GUI -- user runs `conflab daemon cert install`          | yes (via pkg)                             | manual: `conflab daemon cert install` after Setup wizard            |
-| Setup wizard launches               | yes (postinstall -> Conflab.app)                           | no -- user runs `conflab install setup --interactive`      | yes (via pkg)                             | yes if `--with-app`; else `conflab install setup --interactive`     |
-| Shell-rc changes                    | none                                                       | none                                                       | none                                      | none (PATH inherits via `/usr/local/bin` presence)                  |
-| Keychain entries written            | Conflab Local CA (login.keychain, via wizard)              | same (via `conflab daemon cert install`)                   | same (via wizard)                         | same (via wizard or manual cert install)                            |
+| Step                               | .pkg (signed installer)                                    | brew formula (`brew install conflab`)                      | brew cask (`brew install --cask conflab`) | curl-shell (`install.sh`)                                           |
+| ---------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------- |
+| Drops `conflab` CLI                | `/usr/local/bin/conflab` (Apple Installer payload, signed) | brew prefix (`/opt/homebrew/bin/conflab` on Apple Silicon) | wraps pkg -> `/usr/local/bin/conflab`     | `/usr/local/bin/conflab` (default; `CONFLAB_INSTALL_DIR` overrides) |
+| Drops `conflabd` daemon            | `/usr/local/bin/conflabd`                                  | brew prefix (`/opt/homebrew/bin/conflabd`)                 | wraps pkg -> `/usr/local/bin/conflabd`    | NOT installed -- CLI-only; user runs `conflab daemon init` later    |
+| Drops `/Applications/Conflab.app`  | yes                                                        | no                                                         | yes (via pkg)                             | only with `--with-app` (downloads + runs pkg)                       |
+| `xattr -d com.apple.quarantine`    | n/a (Apple-signed at install time)                         | n/a (brew bottle, no quarantine)                           | n/a (wraps pkg)                           | yes -- installer strips quarantine bit on Darwin                    |
+| Writes `space.conflab.pkg` receipt | yes (pkgutil receipt)                                      | no                                                         | yes (via pkg)                             | only with `--with-app`                                              |
+| LaunchAgent plist                  | written by Conflab.app first-run                           | NOT written -- formula uses `brew services` launchd label  | written by Conflab.app first-run          | NOT written until user runs `conflab daemon start`                  |
+| Service label                      | `space.conflab.daemon`                                     | `homebrew.mxcl.conflab` (brew default)                     | `space.conflab.daemon` (via pkg)          | `space.conflab.daemon` (after `conflab daemon start`)               |
+| `KeepAlive` (auto-restart policy)  | conditional dict (crash + non-zero exit only)              | conditional dict (crash + non-zero exit only)              | conditional dict (via pkg)                | conditional dict after `conflab daemon start`                       |
+| `RunAtLoad`                        | true                                                       | true (brew services default)                               | true (via pkg)                            | depends on `conflab daemon start` config                            |
+| stdout / stderr capture            | `/tmp/conflabd.stdout.log` + `/tmp/conflabd.stderr.log`    | `<brew-prefix>/var/log/conflabd.log` (single file)         | same as pkg                               | inherits the launching shell's stdio                                |
+| App log (canonical)                | `~/.local/share/conflab/conflabd.*.log`                    | same                                                       | same                                      | same                                                                |
+| Daemon auto-start trigger          | pkg postinstall does `open Conflab.app` -> app installs LA | `brew services start conflab`                              | first app launch                          | `conflabd start` OR `conflab daemon start`                          |
+| First-run CA Trust prompt          | yes (Conflab.app on launch)                                | no GUI -- user runs `conflab daemon cert install`          | yes (via pkg)                             | manual: `conflab daemon cert install` after Setup wizard            |
+| Setup wizard launches              | yes (postinstall -> Conflab.app)                           | no -- user runs `conflab install setup --interactive`      | yes (via pkg)                             | yes if `--with-app`; else `conflab install setup --interactive`     |
+| Shell-rc changes                   | none                                                       | none                                                       | none                                      | none (PATH inherits via `/usr/local/bin` presence)                  |
+| Keychain entries written           | Conflab Local CA (login.keychain, via wizard)              | same (via `conflab daemon cert install`)                   | same (via wizard)                         | same (via wizard or manual cert install)                            |
 
 After first-run setup completes, every path leaves the same `~/.conflab/`, `~/.config/conflab/`, and login keychain state. The remaining differences are install-time conventions (service label, log-capture path), not user-visible app behaviour.
 
