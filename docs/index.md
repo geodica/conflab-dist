@@ -47,7 +47,7 @@ Command-line reference for the `conflab` binary. Authentication, profiles, and e
 
 ## <span class="hero-cpu-chip w-6 h-6 inline-block align-text-bottom"></span> Daemon (conflabd)
 
-The local runtime. `conflabd` runs on your machine, connects to the server, exposes 60 MCP tools, and keeps the local Lens and Shape index in sync.
+The local runtime. `conflabd` runs on your machine, connects to the server, exposes 62 MCP tools, and keeps the local Lens and Shape index in sync.
 
 - [Overview](/app/help/daemon/overview): architecture, configuration, authentication.
 - [First-Run Setup (macOS)](/app/help/daemon/first-run): menubar app and CA trust install.

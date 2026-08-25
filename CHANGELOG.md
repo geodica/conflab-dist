@@ -4,6 +4,152 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-08-25
+
+A patch release by number, substantial in content. Its centre is one user-visible defect -- a valid provider API key reported as bad -- which had three independent causes, and the problem underneath it: a model identifier written down in four languages, so a provider retiring a model broke each surface separately and surfaced as "your key is bad". No schema changes; the wire change is additive.
+
+### Added
+
+- **Model symbols.** A symbol names the role a model plays (`ANTHROPIC_OPUS_LATEST`); a shipped seed of eight symbols binds that role to today's identifier, and callers name only the role. Resolution is three layers: the seed, your `models.toml` pins (which always win), and the provider's live catalogue (compared against, never auto-adopted). The effective table is computed on every read and never stored, so a shipped default cannot be written back into your config as though you had chosen it. `conflab model list` and `conflab daemon doctor` report where each binding came from.
+
+- **Verify a candidate provider key before it replaces the stored one.** `conflab model verify-key <provider> --api-key <key>` stores the candidate only if the provider accepts it; `--no-save` probes and writes nothing; the bare form probes the key already on disk. A key that fails to verify is not written, so a bad paste cannot destroy a working credential. Surrounding quotes and stray whitespace are stripped daemon-side. Two new MCP tools alongside the existing `verify_provider_key`: `verify_candidate_provider_key` and `verify_and_save_provider_key`.
+
+- **Repair a rejected key where the run failed (macOS).** A Lens run that fails on a refused provider credential offers to replace that provider's key inline in the run pane. The offer is decided on the structured error code alone -- not the message text, HTTP status, or provider name -- so a run that fails for any other reason gets no misleading affordance.
+
+- **Structured run errors, end to end.** Run results carry `error { code provider model message operands }` across daemon, CLI and macOS app, over a taxonomy of twelve codes. A provider-auth failure carries remediation naming the file that holds the key and the command that replaces it; every other failure reports what the daemon observed and prescribes nothing.
+
+- **Launcher keyboard shortcuts and state restore (macOS).** ⌘1 to ⌘9 switch tabs, derived from the picker order so the shortcut and the layout cannot drift apart; ⌘F focuses a search field that is now visible rather than implied. Both are bound only while the grid is showing. The Launcher remembers your tab, Manage panel and window frames across launches, falling back to the default when a stored id no longer names anything.
+
+### Changed
+
+- **Key verification stopped billing you to answer a yes/no question.** All three provider probes moved from POSTing a completion against a pinned model to a GET against the provider's model-listing endpoint (`/v1/models`, `/v1/models`, `/v1beta/models`). A test now fails if any probe URL names a model at all.
+
+- **Only HTTP 401 and 403 count as a credential rejection.** Everything else is reported as inconclusive, in those words: "could not verify: provider answered HTTP 429. This does not mean the key is bad." Remediation follows the same rule -- only a refused or absent credential is told to replace the key. A rate limit used to say "replace your key".
+
+- **`conflab daemon doctor` reports measurement, not intent.** The conflabc URL check tests reachability rather than presence (it printed a green tick against a dead `localhost:4000` for twenty-five days); every distinct provider credential is probed once; a daemon bound to a different server than the active profile is a failure rather than an uncounted advisory; the `warn` tier is gone, so every non-verified provider status counts as a failure; and the models count reports the effective table rather than the `[models]` section.
+
+- **`conflab daemon init` pins no model.** The generated `models.toml` carries your key under `[providers.<name>]` and a `default_model` naming the seed's default symbol, with no identifier at all, so a cold install tracks the seed instead of freezing at install day. This also retires the legacy in-`[models.<name>]` key placement the loader was migrating on every start.
+
+- **One implementation of provider-key verification.** The macOS app carried a complete second implementation with its own URLSession, request builders and status-code mapping; which one ran was decided by whether a text field happened to be empty, so the same key could fail and then pass seconds apart. The app's copy is deleted and all three surfaces call one probe.
+
+- **Favourites renders as a grid (macOS)**, through the same tiles as the Library rather than as a full-width list. Drag-to-reorder went with the list and has not yet been replaced.
+
+### Fixed
+
+- **Google credentials reported as bad.** The macOS app's probe named a model Google had retired, so a valid Google key came back rejected with "generate a new one from the provider's console" attached. The broken path was the first-use path -- a field is only blank for a key already on disk -- so every new key and every rotation hit it.
+
+- **A failed retry kept part of the previous attempt.** The retry path cleared the previous attempt's failure and kept its result, so a failed retry served the new prompt beside the previous answer. The per-attempt model, trace and token counts are cleared with it; the run's composition fields are deliberately retained, since they are written only by the full-run path and still describe the run truthfully.
+
+- **Every surface reports what dispatch uses, not what you pinned.** Four dispatch sites and the reporting surfaces now read one effective table.
+
+- **GraphQL string escaping** covers the whole grammar class rather than the byte that happened to be reported. Three duplicated encodings collapsed on macOS: one server-URL default, one GraphQL escape, one TOML unquote.
+
+- **Seven hand-rolled polling loops replaced** by one observation primitive (macOS). `withObservationTracking` is one-shot and each site re-armed it slightly differently.
+
+- The Launcher panel no longer paints over the Manage window; one editor asks for focus and it is the one you are looking at; `BuildInfo` is stamped on every build rather than once.
+
+- **Websockets on `fly.dev`.** `check_origin` is derived from `FLY_APP_NAME` rather than hardcoded, so the app name can move without refusing connections.
+
+### Tooling
+
+- `bin/conflab` and `bin/cf` are devbin; the hand-rolled launcher is gone. The pre-commit hook, CI and the release pre-flight all delegate to the same `conflab check` / `conflab test` gates.
+- Toolchain pinned to Erlang 29.0.5 and Elixir 1.20.3-otp-29, deploy image included.
+- Rust `fmt` and `clippy` gates run pre-commit, not only in CI.
+- Seven dead Credo checks removed -- `credo_checks/` was never referenced from `.credo.exs`'s `checks:` and had never run. Nine dead `mix.lock` entries dropped.
+- Production consolidated onto one app (`conflab-app`) and one shared database cluster with a per-app user, on a single 2GB machine. Server-side, already live.
+
+### Documentation
+
+- **Corrected a false claim about where provider API keys live.** The docs said keys were held in "the daemon's secrets store, not in `models.toml`". Provider keys are stored in `models.toml` itself, in plaintext, under `[providers.<provider>]`, in a file written with the system's default permissions. The macOS Keychain holds the daemon's own management password, which is a different secret.
+- Model symbols documented, with the eight shipped symbols, the seed / pin / catalogue precedence, and what pinning gives up. The `models.toml` examples now show what `conflab daemon init` writes.
+- The two new key-verification MCP tools documented, with the five-value status taxonomy and the rule that only `CREDENTIAL_REJECTED` means the key is bad.
+- `model verify-key` and `verify_provider_key` no longer described as a "1-token call"; the MCP tool count corrected from 60 to 62; `claude-opus-4-7` removed as a current identifier in six places across four pages, and examples naming a model config name now name a symbol.
+
+### Migration notes
+
+- No schema changes and no new database migrations.
+- The wire change is additive: the run result gains an `error { ... }` object, and clients reading `llmError` / `errorMessage` keep working unchanged.
+- `models.toml` is compatible in both directions. Existing `[models.<name>]` pins keep winning over the seed, and keys still found under `[models.<name>]` are still migrated at load. Only new installs get the pin-free template.
+- **`conflab daemon doctor` will report failures it previously reported as warnings or not at all** -- an unreachable server, a profile/binding mismatch, an unverified provider credential. This is a reporting change: those states existed before and did not count.
+- The `[conflab-error]` process tag keeps its frame but now carries the shared error JSON instead of a bespoke `reason; existing_handles=A,B` encoding. The CLI and app ship together, so this affects only third-party consumers of that tag.
+- Existing v0.6.0 installs upgrade cleanly.
+
+## [0.6.0] - 2026-07-10
+
+A milestone release that modernises the project's tooling and infrastructure and lands a set of correctness and hardening fixes. No schema or wire-protocol changes; existing installs upgrade cleanly.
+
+### Added
+
+- **Local multi-host dev support (`conflab.localhost`).** The daemon accepts configured `*.localhost` dev origins in both its CORS allowlist and its OAuth redirect validation, sourced from the shared `priv/config/endpoints.json` `dev_origins`, so the web app can run under a hostname qualifier as well as bare `localhost`. Dev-facing; no effect on production installs.
+
+### Fixed
+
+- **Daemon-connect page crash on the browser daemon-health signal.** `/app/daemon/connect` and `/app/daemon/token/cycle` crashed with a `FunctionClauseError` when the browser-side `DaemonBridge` hook reported daemon health -- their route session was missing the central `LiveDaemonStatus` handler every other `/app/*` route already attaches. Now attached consistently.
+
+- **Redirect-validation hardening in the daemon.** `is_safe_redirect` matched allowed redirect origins by prefix, which permitted an allowed origin to be extended into a different, attacker-controlled host. Every arm now enforces an origin boundary -- the match must be followed by `/`, `?`, `#`, or end-of-string -- and the localhost/loopback arms additionally guard the port digits.
+
+- **Elixir type-checker cleanup.** Cleared every Elixir 1.19 type-checker finding surfaced by the dependency refresh -- dead `{:error}` branches, always-true `!= nil` comparisons, a dead `|| []`, unused `require`s -- plus a `with`-railway conversion in the Slack user cache. Clean under `--warnings-as-errors`.
+
+### Tooling
+
+- Intent 2.11 to 2.16.1, including the multi-node whiteboard coordination workflow.
+- `scripts/` relocated to `bin/`; all references swept.
+- CI test workflow split into three parallel jobs (`elixir` / `rust-cli` / `rust-daemon`).
+- Dependency refresh and removal of the dead `matthewsinclair/memento` fork pin.
+
+### Migration notes
+
+- No schema changes, no new database migrations, no CLI / daemon / macOS-app wire-protocol changes.
+- Existing v0.5.8 installs upgrade cleanly. The daemon binary changes with no change to steady-state behaviour.
+
+## [0.5.8] - 2026-05-20
+
+Housekeeping patch closing two v0.5.7 carry-forward items. No wire-protocol changes; no behavioural change at steady state.
+
+### Fixed
+
+- **Daemon: single `ModelsConfig` load in the event loop.** `run_event_loop` loaded `models.toml` twice at startup -- once for the router, which consumed it, and again to build the provider map and models snapshot. Two independent disk reads could diverge if the file changed between them, leaving the router and the snapshot on different configs. The daemon now loads once, clones for the router, and reuses the in-memory copy.
+
+### Housekeeping
+
+- **fsevents-resync-fragility closed.** macOS FSEvents can drop events for newly-created subdirectories under a recursive watch. The v0.3.5 periodic-resync backstop (default 60s, tunable via `[watcher].resync_interval_secs`) is sufficient at current LSD scale; a permanent kqueue-based fix stays documented as a future option.
+
+### Migration notes
+
+- No schema changes, no new migrations, no wire-protocol changes. Existing v0.5.7 installs continue to function; the daemon binary changes but its observable behaviour does not.
+
+## [0.5.7] - 2026-05-20
+
+Feature release introducing one-touch daemon environment switching, fail-fast LaunchAgent behaviour for permanent configuration errors, and a clean `save` / `publish` split for Lenses and Shapes on the CLI. No wire-protocol changes; no breaking changes for existing installs.
+
+### Added
+
+- **`conflab daemon switch <env>`.** Resolves the unique agent profile holding credentials for `<env>`, stops the daemon, regenerates `daemon.toml`, restarts, and runs `daemon doctor`. If any post-switch check fails, the previous `daemon.toml` and active profile are restored automatically. The old five-step recipe collapses to one command with auto-rollback.
+
+- **`conflab daemon init` refuses non-agent profiles** before any filesystem write, with a remediation hint naming the agent profile to use. A daemon initialised against a non-agent profile previously crashed in a LaunchAgent restart loop.
+
+- **`conflab daemon doctor` Profile alignment row**, comparing `daemon.toml`'s server URL against the active CLI profile's URL.
+
+- **macOS Settings to Flabs binding card and switch sheet.** A Connection card shows the active binding (agent handle, server URL, connection state, connected flab count, daemon version); each non-active environment offers a Switch button behind a confirmation sheet, driving the `daemon switch` command with the doctor's check-by-check output streamed into a progress UI. Auto-rollback surfaces as a restored-binding indicator.
+
+- **LaunchAgent fail-fast on permanent errors.** The daemon distinguishes permanent configuration errors (identity mismatch, missing handle, malformed config) from transient ones (conflabc unreachable, network drop). Permanent errors exit 0 with a `FATAL_NO_RETRY` marker; transient errors exit 75 with `FATAL_RETRY`. The plist emits a conditional `KeepAlive` dict so launchd respawns on crashes and non-zero exits but not on a clean zero exit. The five-dead-PIDs-in-fifty-seconds restart loop on identity mismatch is gone.
+
+- **Lens / Shape `save` and `publish` CLI verbs.** `save` writes locally under `~/.conflab/db/{lenses,shapes}/`; `publish` pushes a locally-saved entry to the Catalog, with `--note <text>` recording a changelog entry. Publishing requires a human profile and lands `pending` moderation. `create` is retained as a deprecated alias. conflabc gains a `publishCatalogEntry` GraphQL mutation; no new migrations.
+
+### Changed
+
+- **`daemon_cmd.rs` split into a module directory** of eleven focused submodules. Zero behaviour change; every external caller resolves unchanged through a narrow re-export block.
+
+### Fixed
+
+- **Doctor's "Invalid API key" hint pointed at the wrong command.** The 401 path said to run `conflab config new <name>`, which refuses existing profiles. It now points at `conflab auth`.
+- **`conflab config new <existing>` offers a real remediation** instead of a bare "Profile already exists", shaped by profile type.
+- **`conflab daemon switch` no longer writes the OS hostname into `daemon.toml`.** It was falling through to the OS hostname as the agent handle instead of the canonical handle derived from the agent profile name.
+
+### Migration notes
+
+- No schema changes, no new migrations, no wire-protocol changes.
+
 ## [0.5.6] - 2026-05-18
 
 Hotfix release closing eight defects in the install / onboarding / agent-identity pipeline surfaced by a real returning-user cold-smoke of v0.5.5. All eight WPs of ST0118 land in this patch. No wire-protocol changes; no behavioural changes for first-install users on a fresh account.

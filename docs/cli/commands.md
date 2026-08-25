@@ -161,17 +161,17 @@ Execute a Lens directly.
 ```bash
 conflab run coding/review
 conflab run coding/review --variables '{"code": "fn main() {}", "language": "Rust"}'
-conflab run meeting-summary --model claude-haiku --shape meeting-summary.shapemd
+conflab run meeting-summary --model ANTHROPIC_HAIKU_LATEST --shape meeting-summary.shapemd
 ```
 
 Flags:
 
-| Flag                   | Description                                                         |
-| ---------------------- | ------------------------------------------------------------------- |
-| `--variables '<json>'` | Lens variables as a JSON object.                                    |
-| `--model <name>`       | Override the model for this run (eg `claude-opus`, `claude-haiku`). |
-| `--shape <path>`       | Override the Shape referenced by the Lens.                          |
-| `--json`               | Output the run result as JSON.                                      |
+| Flag                   | Description                                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------------- |
+| `--variables '<json>'` | Lens variables as a JSON object.                                                                  |
+| `--model <name>`       | Override the model for this run. Any name from `conflab model list`, eg `ANTHROPIC_HAIKU_LATEST`. |
+| `--shape <path>`       | Override the Shape referenced by the Lens.                                                        |
+| `--json`               | Output the run result as JSON.                                                                    |
 
 ### `conflab tool`
 
@@ -209,19 +209,20 @@ conflab category list --json
 
 Manage [Models](/app/help/concepts/models) (LLM provider configurations).
 
-| Subcommand                         | Description                                                                                                                     |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `model list`                       | List configured models. `--json` optional.                                                                                      |
-| `model update <name> --model <id>` | Update a model. `--provider`, `--api-key`, `--system-prompt` optional.                                                          |
-| `model default <name>`             | Set the default model for Lens execution.                                                                                       |
-| `model route <flab> <model>`       | Route a flab to a specific model.                                                                                               |
-| `model unroute <flab>`             | Remove a flab's model override.                                                                                                 |
-| `model verify-key <provider>`      | Probe the stored provider API key with a 1-token call. Returns `ok` plus a short reason. Plaintext key never leaves the daemon. |
+| Subcommand                         | Description                                                                                                                                                                                                               |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model list`                       | List the effective models -- every shipped symbol, plus anything pinned -- and where each binding came from. `--json` optional.                                                                                           |
+| `model update <name> --model <id>` | Update a model. `--provider`, `--api-key`, `--system-prompt` optional.                                                                                                                                                    |
+| `model default <name>`             | Set the default model for Lens execution.                                                                                                                                                                                 |
+| `model route <flab> <model>`       | Route a flab to a specific model.                                                                                                                                                                                         |
+| `model unroute <flab>`             | Remove a flab's model override.                                                                                                                                                                                           |
+| `model verify-key <provider>`      | Ask the provider whether the stored key is accepted. `--api-key <key>` verifies a candidate and stores it only if accepted; add `--no-save` to check one without writing anything. Plaintext key never leaves the daemon. |
 
 ```bash
 conflab model list
-conflab model default claude-opus
-conflab model route my-flab claude-haiku
+conflab model default ANTHROPIC_OPUS_LATEST
+conflab model route my-flab ANTHROPIC_HAIKU_LATEST
+conflab model verify-key anthropic --api-key sk-ant-... --no-save
 ```
 
 ---

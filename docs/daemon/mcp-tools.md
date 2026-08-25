@@ -4,7 +4,7 @@ title: MCP Tools Reference
 
 # MCP Tools Reference
 
-conflabd exposes 60 MCP tools that LLM agents use to interact with Conflab. Tools are grouped by domain:
+conflabd exposes 62 MCP tools that LLM agents use to interact with Conflab. Tools are grouped by domain:
 
 - [Messaging](#messaging) (4)
 - [Flabs](#flabs) (7)
@@ -13,7 +13,7 @@ conflabd exposes 60 MCP tools that LLM agents use to interact with Conflab. Tool
 - [Lenses](#lenses) (7)
 - [Shapes](#shapes) (4)
 - [Runs](#runs) (6)
-- [Models](#models) (8)
+- [Models](#models) (10)
 - [Policy](#policy) (4)
 - [Plugins](#plugins) (1)
 - [App](#app-macos) (3)
@@ -375,7 +375,7 @@ Re-issue a Run's rendered prompt against the daemon. Useful for retrying a faile
 | `model`         | string | Optional. Override the model config name.                            |
 
 ```
-send_run_prompt(id: "a1b2c3", model: "claude-opus-4-7")
+send_run_prompt(id: "a1b2c3", model: "ANTHROPIC_OPUS_LATEST")
 ```
 
 ---
@@ -412,17 +412,19 @@ Set the default model for Lens execution.
 
 Add a new model entry to `models.toml`. The daemon validates the provider name and persists the entry; the model is immediately available for Lens execution.
 
+This writes a **pin**. A pinned entry always beats the shipped seed and stops tracking updates to it, so reach for it when you want a specific identifier rather than the current one for a role. Most callers want an existing symbol from `list_models` instead.
+
 | Parameter       | Type    | Description                                                                    |
 | --------------- | ------- | ------------------------------------------------------------------------------ |
 | `name`          | string  | Required. Friendly name (eg `claude-opus`). Becomes the `[models.<name>]` key. |
 | `provider`      | string  | Required. Provider slug (`anthropic`, `openai`, `google`, etc).                |
-| `model`         | string  | Required. Provider-side model identifier (eg `claude-opus-4-7`).               |
+| `model`         | string  | Required. Provider-side model identifier (eg `claude-opus-5`).                 |
 | `api_key`       | string  | Optional. Stored under `[providers.<provider>]` if supplied.                   |
 | `system_prompt` | string  | Optional. Per-model system prompt prepended to Lens runs that use this model.  |
 | `set_default`   | boolean | Optional. If true, also sets this as the daemon-wide default model.            |
 
 ```
-add_model(name: "claude-opus", provider: "anthropic", model: "claude-opus-4-7", api_key: "sk-ant-...")
+add_model(name: "claude-opus", provider: "anthropic", model: "claude-opus-5", api_key: "sk-ant-...")
 ```
 
 ### `remove_model`
@@ -450,9 +452,33 @@ Clear a flab's model override and revert to the daemon-wide default.
 | --------- | ------ | -------------------- |
 | `flab`    | string | Required. Flab slug. |
 
+### Verifying a provider key
+
+Three tools ask a provider whether a key is accepted. They differ only in which key is tested and what happens to it afterwards.
+
+| Tool                            | Tests            | On success         | On failure                       |
+| ------------------------------- | ---------------- | ------------------ | -------------------------------- |
+| `verify_provider_key`           | the key on disk  | nothing is written | nothing is written               |
+| `verify_candidate_provider_key` | a key you supply | nothing is written | nothing is written               |
+| `verify_and_save_provider_key`  | a key you supply | the key is stored  | the stored key is left untouched |
+
+All three verify by asking the provider to list its models -- a request that costs nothing and names no model, so it cannot break when a provider retires one. All three return `{ok, status, reason, saved}`, and the plaintext key never leaves the daemon.
+
+**Branch on `status`, not on `ok` or on the message text:**
+
+| Status                | Meaning                                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `VERIFIED`            | The provider accepted the key.                                                                                           |
+| `CREDENTIAL_REJECTED` | The provider refused the key. **This is the only status that means the key is bad.**                                     |
+| `NO_KEY_STORED`       | There is no key on disk for this provider.                                                                               |
+| `UNKNOWN_PROVIDER`    | The provider name is not one this build knows.                                                                           |
+| `INCONCLUSIVE`        | The provider answered, but not with a verdict -- a rate limit, an outage, a network failure. Says nothing about the key. |
+
+Offer to replace a key on `CREDENTIAL_REJECTED` or `NO_KEY_STORED` only. An `INCONCLUSIVE` result is not grounds for telling someone their credential is wrong.
+
 ### `verify_provider_key`
 
-Issue a 1-token probe against the provider's cheapest endpoint to confirm the stored API key is accepted. Returns `{ok, reason}`. The plaintext key never leaves the daemon.
+Verify the key already stored for a provider.
 
 | Parameter  | Type   | Description                                                               |
 | ---------- | ------ | ------------------------------------------------------------------------- |
@@ -460,6 +486,34 @@ Issue a 1-token probe against the provider's cheapest endpoint to confirm the st
 
 ```
 verify_provider_key(provider: "anthropic")
+```
+
+### `verify_candidate_provider_key`
+
+Verify a key you supply and write nothing, whatever the answer. Use this behind a Test control that sits beside a separate Save control. `saved` is always false.
+
+| Parameter  | Type   | Description                                         |
+| ---------- | ------ | --------------------------------------------------- |
+| `provider` | string | Required. Provider name (case-insensitive).         |
+| `api_key`  | string | Required. The candidate key. Never written to disk. |
+
+```
+verify_candidate_provider_key(provider: "anthropic", api_key: "sk-ant-...")
+```
+
+### `verify_and_save_provider_key`
+
+Verify a key you supply and store it only if the provider accepts it. A failed verification leaves any existing stored key untouched, so a bad paste cannot destroy a working credential.
+
+Surrounding quotes and control characters are stripped before probing, so a key copied out of a `.env` file with its quotes, or wrapped across two lines in an email, still works.
+
+| Parameter  | Type   | Description                                                           |
+| ---------- | ------ | --------------------------------------------------------------------- |
+| `provider` | string | Required. Provider name (case-insensitive).                           |
+| `api_key`  | string | Required. The candidate key. Written only if the provider accepts it. |
+
+```
+verify_and_save_provider_key(provider: "anthropic", api_key: "sk-ant-...")
 ```
 
 ---

@@ -108,7 +108,7 @@ The MCP connection is stateless. conflabd does not track MCP sessions. Claude Co
 
 ## The MCP Tool Surface
 
-conflabd exposes 60 MCP tools spanning messaging, flabs, tasks, memory, Lenses, Shapes, Runs, Models, model and policy admin, agent-loop caps, categories, app control, daemon management, plugin introspection, and resource resolution. See [MCP Tools Reference](/app/help/daemon/mcp-tools) for the full list.
+conflabd exposes 62 MCP tools spanning messaging, flabs, tasks, memory, Lenses, Shapes, Runs, Models, model and policy admin, agent-loop caps, categories, app control, daemon management, plugin introspection, and resource resolution. See [MCP Tools Reference](/app/help/daemon/mcp-tools) for the full list.
 
 In Claude Code, these tools appear as `mcp__conflabd__<tool_name>` and are invoked like any other MCP tool.
 

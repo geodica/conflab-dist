@@ -96,7 +96,7 @@ A flab can be routed to a specific [Model](/app/help/concepts/models) to control
 Manage routing via CLI:
 
 ```bash
-conflab model route my-flab claude-haiku     # route this flab to Haiku
+conflab model route my-flab ANTHROPIC_HAIKU_LATEST   # route this flab to Haiku
 conflab model unroute my-flab                # revert to default
 ```
 

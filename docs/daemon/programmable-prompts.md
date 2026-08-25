@@ -151,7 +151,7 @@ local result = bridge.mcp(tool_name, params)
 
 #### Available Tools
 
-All 60 MCP tools exposed by the daemon are callable via `bridge.mcp(...)`. A few commonly used ones:
+All 62 MCP tools exposed by the daemon are callable via `bridge.mcp(...)`. A few commonly used ones:
 
 | Tool              | Parameters                           | Description                           |
 | ----------------- | ------------------------------------ | ------------------------------------- |
