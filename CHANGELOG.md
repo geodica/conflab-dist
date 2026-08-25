@@ -4,6 +4,26 @@ All notable changes to conflab (CLI + daemon) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2026-08-25
+
+A small patch on the same day as 0.6.1, closing two things that release left behind: a status line describing a check it had just stopped performing, and a build step that wrote the builder's home directory into a checked-in file. No schema changes, no migrations, no wire-protocol changes.
+
+### Fixed
+
+- **A verified key no longer claims a probe that no longer happens.** `conflab model verify-key` and `conflab daemon doctor` reported a good credential as "verified with a 1-token probe". That stopped being true in 0.6.1, which moved all three provider probes off a POSTed completion and onto an authenticated GET against the provider's model-listing endpoint -- so the check costs nothing and names no model a provider can retire. The line now reads "verified against the provider's model list". This is wording, not behaviour: the check, its result and every status it can return are unchanged. Two daemon doc comments still carry the same stale description (`mgmt/mutations.rs:937`, `mgmt/types.rs:393`) and are deliberately left: they are internal doc comments, and editing the daemon crate hits the same whole-file rule check the CLI was migrated past below. One further mention, in `provider/probe.rs`, stays as it is because it correctly describes what the probe *used to* do.
+
+### Tooling
+
+- **`xcodegen` no longer bakes an absolute path into the Xcode project.** `project.pbxproj` is checked in and its BuildInfo build phase resolves `${PROJECT_ROOT}` from `${SRCROOT}` at build time, but xcodegen expands `${VAR}` in a build-phase script against its own environment at generation time -- and both scripts that call it export `PROJECT_ROOT`, so generating through them substituted the generating machine's absolute path. The failure is quiet and one-directional: green on the machine that generated it, and `VERSION=0.0.0` with `GIT_HASH=unknown` on any other machine or in CI. Both call sites now generate with `env -u PROJECT_ROOT`. `${SRCROOT}` was never affected, because it is not exported.
+
+- **The CLI crate moved off `Result<T, String>`.** Every fallible function in the `conflab` binary now returns `anyhow::Result<T>` -- 284 signatures across 39 files, plus the error constructions feeding them. **No error message changed**: every format string was preserved verbatim, so failure output is byte-identical to 0.6.1. This is a type change, not a behaviour change. It landed here because the Rust rule library's error-type check scores whole files rather than diffs, so a two-character edit to any CLI file inherited every pre-existing violation in it and was refused -- the crate was in practice uneditable. The daemon carries the same debt in a different shape and keeps it for now.
+
+### Migration notes
+
+- No schema changes, no new database migrations, no wire-protocol changes.
+- The only user-visible difference from 0.6.1 is the wording of one status line.
+- Existing 0.6.1 installs upgrade cleanly.
+
 ## [0.6.1] - 2026-08-25
 
 A patch release by number, substantial in content. Its centre is one user-visible defect -- a valid provider API key reported as bad -- which had three independent causes, and the problem underneath it: a model identifier written down in four languages, so a provider retiring a model broke each surface separately and surfaced as "your key is bad". No schema changes; the wire change is additive.
